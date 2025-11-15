@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  accudoc:
+    build: .
+    image: accudoc:latest
+    volumes:
+      # Mount local repositories
+      - ./repos:/repos
+      # Mount output directory
+      - ./output:/output
+    command: info
+    
+  # Example service to scan a local repository
+  accudoc-scan:
+    build: .
+    image: accudoc:latest
+    volumes:
+      - ./repos:/repos
+      - ./output:/output
+    command: ["export", "/repos/your-repo", "-o", "/output/docs.md"]

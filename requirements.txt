@@ -1,0 +1,9 @@
+# AccuDoc Requirements
+# No external dependencies required - uses Python standard library only
+
+# Optional dependencies for enhanced features:
+# tkinterdnd2>=0.3.0  # For drag & drop support in GUI (optional but recommended)
+# tkinterweb>=3.0.0   # For HTML preview rendering in GUI (optional, best HTML support)
+# tkhtmlview>=0.1.0   # Alternative HTML preview (optional)
+# markdown>=3.0.0     # For better markdown to HTML conversion (optional)
+# docker>=6.0.0       # For live testbed feature (optional)

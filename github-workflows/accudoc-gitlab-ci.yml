@@ -1,0 +1,77 @@
+# GitLab CI Template for AccuDoc Documentation Generation
+# Copy this file to your repository as .gitlab-ci.yml
+
+stages:
+  - scan
+  - generate
+  - deploy
+
+variables:
+  ACCUDOC_VERSION: "main"
+  DOCS_DIR: "docs"
+
+before_script:
+  - apt-get update -qq
+  - apt-get install -y -qq git python3 python3-pip
+  - git clone https://github.com/jamesellette/AccuDoc.git /tmp/accudoc
+
+scan-repository:
+  stage: scan
+  image: python:3.9
+  script:
+    - python3 /tmp/accudoc/accudoc_cli.py scan . -o scan-results.json
+  artifacts:
+    paths:
+      - scan-results.json
+    expire_in: 1 week
+  only:
+    - branches
+
+generate-markdown-docs:
+  stage: generate
+  image: python:3.9
+  dependencies:
+    - scan-repository
+  script:
+    - mkdir -p $DOCS_DIR
+    - python3 /tmp/accudoc/accudoc_cli.py generate scan-results.json -o $DOCS_DIR/README.md
+    - python3 /tmp/accudoc/accudoc_cli.py generate scan-results.json -o $DOCS_DIR/API.md --template api
+  artifacts:
+    paths:
+      - $DOCS_DIR/
+    expire_in: 1 month
+  only:
+    - branches
+
+generate-html-docs:
+  stage: generate
+  image: python:3.9
+  dependencies:
+    - scan-repository
+  script:
+    - mkdir -p $DOCS_DIR
+    - python3 /tmp/accudoc/accudoc_cli.py generate scan-results.json -o $DOCS_DIR/index.html --format html --theme dark
+  artifacts:
+    paths:
+      - $DOCS_DIR/
+    expire_in: 1 month
+  only:
+    - branches
+
+deploy-pages:
+  stage: deploy
+  image: alpine:latest
+  dependencies:
+    - generate-markdown-docs
+    - generate-html-docs
+  script:
+    - echo "Deploying documentation..."
+  artifacts:
+    paths:
+      - public
+  only:
+    - main
+    - master
+  environment:
+    name: production
+    url: https://$CI_PROJECT_NAMESPACE.gitlab.io/$CI_PROJECT_NAME

@@ -1,0 +1,62 @@
+# Example AccuDoc Validation Rules Configuration
+# 
+# This file demonstrates how to configure custom validation rules
+# for your documentation. Place this file in your project root or
+# specify its path when running validation.
+
+validation_rules:
+  # Enforce maximum line length
+  - type: max-line-length
+    enabled: true
+    severity: warning  # error, warning, or info
+    config:
+      max_length: 120  # Maximum characters per line
+
+  # Require specific documentation sections
+  - type: required-sections
+    enabled: true
+    severity: error
+    config:
+      sections:
+        - Overview
+        - Installation
+        - Usage
+        - License
+
+  # Detect discouraged words/phrases
+  - type: forbidden-words
+    enabled: true
+    severity: warning
+    config:
+      words:
+        - simply
+        - just
+        - easy
+        - obviously
+        - basically
+        - clearly
+      case_sensitive: false
+
+  # Prevent excessive blank lines
+  - type: no-consecutive-blanks
+    enabled: true
+    severity: info
+    config:
+      max_consecutive: 1  # Maximum consecutive blank lines allowed
+
+  # Enforce heading capitalization style
+  - type: heading-capitalization
+    enabled: true
+    severity: info
+    config:
+      style: title  # Options: title, sentence, upper, lower
+
+  # Require language specification for code blocks
+  - type: code-block-language
+    enabled: true
+    severity: warning
+    config: {}
+
+# You can disable rules by setting enabled: false
+# You can adjust severity levels: error, warning, info
+# Each rule type has its own configuration options

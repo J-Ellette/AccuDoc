@@ -1,0 +1,39 @@
+name: Generate Documentation with AccuDoc
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  generate-docs:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install AccuDoc
+        run: |
+          git clone https://github.com/jamesellette/AccuDoc.git /tmp/accudoc
+      
+      - name: Generate Documentation
+        run: |
+          python /tmp/accudoc/accudoc_cli.py export . \
+            -o docs/DOCUMENTATION.md \
+            --template default
+      
+      - name: Upload Documentation
+        uses: actions/upload-artifact@v3
+        with:
+          name: documentation
+          path: docs/

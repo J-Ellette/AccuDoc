@@ -1,0 +1,25 @@
+{
+  "repositories": [
+    {
+      "url": "https://github.com/example/repo1",
+      "output": "docs/repo1.md",
+      "template": "default",
+      "format": "markdown",
+      "markdown_flavor": "github"
+    },
+    {
+      "url": "https://github.com/example/repo2",
+      "output": "docs/repo2.html",
+      "template": "detailed",
+      "format": "html",
+      "theme": "dark"
+    },
+    {
+      "path": "/path/to/local/repo",
+      "output": "docs/local-repo.md",
+      "template": "minimal",
+      "format": "markdown",
+      "markdown_flavor": "gitlab"
+    }
+  ]
+}

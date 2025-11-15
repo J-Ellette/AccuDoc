@@ -1,0 +1,57 @@
+{
+  "version": "1.0",
+  "repository": ".",
+  "scan": {
+    "exclude_patterns": [
+      ".git",
+      "__pycache__",
+      "node_modules",
+      ".venv",
+      "venv",
+      "dist",
+      "build"
+    ],
+    "include_hidden": false,
+    "use_cache": true,
+    "extensions": [
+      ".py",
+      ".js",
+      ".java",
+      ".cpp",
+      ".c",
+      ".go",
+      ".rb",
+      ".php"
+    ]
+  },
+  "generate": {
+    "template": "default",
+    "format": "markdown",
+    "theme": "default",
+    "title": "My Project Documentation",
+    "include_toc": true,
+    "include_badges": true,
+    "include_stats": true
+  },
+  "output": {
+    "output_file": "docs/README.md",
+    "output_dir": "docs",
+    "create_index": true,
+    "separate_files": false
+  },
+  "features": {
+    "enable_dataflow": true,
+    "enable_call_graph": true,
+    "enable_complexity": true,
+    "enable_coverage": false,
+    "enable_spellcheck": true,
+    "enable_readability": true,
+    "enable_breaking_changes": false
+  },
+  "metadata": {
+    "author": "Your Name",
+    "project_url": "https://github.com/username/project",
+    "license": "MIT",
+    "description": "A comprehensive documentation for my project"
+  }
+}

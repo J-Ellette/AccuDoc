@@ -1,0 +1,213 @@
+#compdef accudoc_cli.py accudoc
+
+# Zsh completion script for AccuDoc CLI
+# Install: Place in a directory in your $fpath (e.g., ~/.zsh/completions)
+# or add to ~/.zshrc: fpath=(~/.zsh/completions $fpath) && autoload -U compinit && compinit
+
+_accudoc() {
+    local line state
+    
+    _arguments -C \
+        '(-h --help)'{-h,--help}'[Show help message]' \
+        '(-v --verbose)'{-v,--verbose}'[Enable verbose output]' \
+        '(-q --quiet)'{-q,--quiet}'[Suppress output]' \
+        '1: :_accudoc_commands' \
+        '*::arg:->args'
+    
+    case $line[1] in
+        scan)
+            _accudoc_scan
+            ;;
+        generate)
+            _accudoc_generate
+            ;;
+        export)
+            _accudoc_export
+            ;;
+        site)
+            _accudoc_site
+            ;;
+        info)
+            _accudoc_info
+            ;;
+        cache)
+            _accudoc_cache
+            ;;
+        check-links)
+            _accudoc_check_links
+            ;;
+        plugins)
+            _accudoc_plugins
+            ;;
+        batch)
+            _accudoc_batch
+            ;;
+        branch-compare)
+            _accudoc_branch_compare
+            ;;
+        version-check)
+            _accudoc_version_check
+            ;;
+        spellcheck)
+            _accudoc_spellcheck
+            ;;
+        multi-repo)
+            _accudoc_multi_repo
+            ;;
+        coverage|readability|db-schema|monorepo|breaking-changes|code-quality|grammar|doc-coverage)
+            _accudoc_analysis
+            ;;
+        dataflow)
+            _accudoc_dataflow
+            ;;
+    esac
+}
+
+_accudoc_commands() {
+    local commands
+    commands=(
+        'scan:Scan repository and generate analysis'
+        'generate:Generate documentation from scan results'
+        'export:Quick export (scan + generate in one command)'
+        'site:Generate static documentation website'
+        'info:Show AccuDoc version and information'
+        'cache:Manage scan result cache'
+        'check-links:Check for broken links in documentation'
+        'plugins:Manage AccuDoc plugins'
+        'batch:Process multiple repositories from batch file'
+        'branch-compare:Compare two git branches'
+        'version-check:Check package versions and dependencies'
+        'spellcheck:Check spelling in documentation'
+        'multi-repo:Analyze multiple related repositories'
+        'coverage:Analyze test coverage'
+        'readability:Analyze documentation readability'
+        'db-schema:Extract and document database schemas'
+        'monorepo:Analyze monorepo structure'
+        'breaking-changes:Detect breaking changes'
+        'code-quality:Analyze code quality metrics'
+        'grammar:Check grammar in documentation'
+        'doc-coverage:Analyze documentation coverage'
+        'dataflow:Analyze data flow in code'
+    )
+    _describe 'command' commands
+}
+
+_accudoc_scan() {
+    _arguments \
+        '1:repository:_directories' \
+        '(-o --output)'{-o,--output}'[Output file]:file:_files' \
+        '(-f --format)'{-f,--format}'[Output format]:format:(json markdown)' \
+        '(-e --exclude)'{-e,--exclude}'[Exclude patterns]:pattern:' \
+        '--include-hidden[Include hidden files]' \
+        '--no-cache[Disable caching]'
+}
+
+_accudoc_generate() {
+    _arguments \
+        '1:scan_file:_files -g "*.json"' \
+        '(-o --output)'{-o,--output}'[Output file]:file:_files' \
+        '(-t --template)'{-t,--template}'[Template]:template:(default minimal detailed api)' \
+        '--format[Output format]:format:(markdown html text)' \
+        '--theme[HTML theme]:theme:(default dark minimal corporate)'
+}
+
+_accudoc_export() {
+    _arguments \
+        '1:repository:_directories' \
+        '(-o --output)'{-o,--output}'[Output file]:file:_files' \
+        '(-t --template)'{-t,--template}'[Template]:template:(default minimal detailed api)' \
+        '--format[Output format]:format:(markdown html text)' \
+        '--theme[HTML theme]:theme:(default dark minimal corporate)' \
+        '--no-cache[Disable caching]'
+}
+
+_accudoc_site() {
+    _arguments \
+        '1:scan_file:_files -g "*.json"' \
+        '(-o --output)'{-o,--output}'[Output directory]:directory:_directories' \
+        '--theme[Site theme]:theme:(default dark minimal)' \
+        '--title[Site title]:title:' \
+        '--no-search[Disable search functionality]'
+}
+
+_accudoc_info() {
+    _arguments \
+        '--version[Show version information]'
+}
+
+_accudoc_cache() {
+    _arguments \
+        '1:repository:_directories' \
+        '(-c --clear)'{-c,--clear}'[Clear cache]' \
+        '(-s --stats)'{-s,--stats}'[Show cache statistics]' \
+        '--path[Show cache path]'
+}
+
+_accudoc_check_links() {
+    _arguments \
+        '1:repository:_directories' \
+        '(-o --output)'{-o,--output}'[Output file]:file:_files' \
+        '--external[Check external links]' \
+        '--timeout[Request timeout]:seconds:'
+}
+
+_accudoc_plugins() {
+    _arguments \
+        '(-l --list)'{-l,--list}'[List installed plugins]' \
+        '(-i --info)'{-i,--info}'[Show plugin information]:plugin:' \
+        '(-d --directory)'{-d,--directory}'[Plugin directory]:directory:_directories'
+}
+
+_accudoc_batch() {
+    _arguments \
+        '1:batch_file:_files -g "*.json"'
+}
+
+_accudoc_branch_compare() {
+    _arguments \
+        '1:repository:_directories' \
+        '(-b --base)'{-b,--base}'[Base branch]:branch:' \
+        '(-c --compare)'{-c,--compare}'[Compare branch]:branch:' \
+        '(-o --output)'{-o,--output}'[Output file]:file:_files' \
+        '(-f --format)'{-f,--format}'[Output format]:format:(markdown json)' \
+        '(-l --list)'{-l,--list}'[List available branches]'
+}
+
+_accudoc_version_check() {
+    _arguments \
+        '1:repository:_directories' \
+        '(-o --output)'{-o,--output}'[Output file]:file:_files' \
+        '(-f --format)'{-f,--format}'[Output format]:format:(markdown json)'
+}
+
+_accudoc_spellcheck() {
+    _arguments \
+        '1:path:_files' \
+        '(-o --output)'{-o,--output}'[Output file]:file:_files' \
+        '(-f --format)'{-f,--format}'[Output format]:format:(markdown json)' \
+        '(-e --extensions)'{-e,--extensions}'[File extensions]:extensions:'
+}
+
+_accudoc_multi_repo() {
+    _arguments \
+        '1:config_file:_files' \
+        '(-o --output)'{-o,--output}'[Output file]:file:_files' \
+        '(-c --config)'{-c,--config}'[Config file]:file:_files'
+}
+
+_accudoc_analysis() {
+    _arguments \
+        '1:repository:_directories' \
+        '(-o --output)'{-o,--output}'[Output file]:file:_files' \
+        '(-f --format)'{-f,--format}'[Output format]:format:(markdown json)'
+}
+
+_accudoc_dataflow() {
+    _arguments \
+        '1:path:_files' \
+        '(-o --output)'{-o,--output}'[Output file]:file:_files' \
+        '(-f --format)'{-f,--format}'[Output format]:format:(markdown json)' \
+        '--no-diagrams[Exclude Mermaid diagrams]'
+}
+
+_accudoc "$@"

@@ -1,0 +1,7 @@
+include README.md
+include LICENSE
+include requirements.txt
+recursive-include accudoc *.json
+recursive-include accudoc *.yaml
+recursive-include accudoc *.yml
+recursive-include examples *
