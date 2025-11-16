@@ -20,6 +20,7 @@ from accudoc.github_api import GitHubAPIClient, scan_github_repository
 from accudoc.gitlab_api import GitLabAPIClient, scan_gitlab_repository
 from accudoc.bitbucket_api import BitbucketAPIClient, scan_bitbucket_repository
 from accudoc.plugins import get_plugin_manager
+from quality_scoring import QualityAnalyzer
 
 
 class AccuDocCLI:
@@ -1689,6 +1690,43 @@ class AccuDocCLI:
                 print(f"\n✗ Error: {str(e)}", file=sys.stderr)
             return 1
     
+    def start_collab_server_command(self, args):
+        """Execute start collaboration server command."""
+        from collaboration_cli import start_collaboration_server
+        
+        self.logger.info("Starting collaboration server")
+        return start_collaboration_server(args)
+    
+    def collab_status_command(self, args):
+        """Execute collaboration status command."""
+        from collaboration_cli import collaboration_status
+        
+        return collaboration_status(args)
+    
+    def stop_collab_server_command(self, args):
+        """Execute stop collaboration server command."""
+        from collaboration_cli import stop_collaboration_server
+        
+        return stop_collaboration_server(args)
+    
+    def manage_sessions_command(self, args):
+        """Execute manage sessions command."""
+        from collaboration_cli import manage_sessions
+        
+        return manage_sessions(args)
+    
+    def manage_comments_command(self, args):
+        """Execute manage comments command."""
+        from collaboration_cli import manage_comments
+        
+        return manage_comments(args)
+    
+    def manage_reviews_command(self, args):
+        """Execute manage reviews command."""
+        from collaboration_cli import manage_reviews
+        
+        return manage_reviews(args)
+    
     def hooks_command(self, args):
         """Execute hooks command."""
         from accudoc.hooks_system import get_hooks_manager, HookPoint
@@ -3021,6 +3059,62 @@ Examples:
         api_parser.add_argument('--debug', action='store_true',
                                help='Enable debug mode')
         
+        # Real-time collaboration server commands
+        start_collab_parser = subparsers.add_parser('start-collab-server',
+                                                   help='Start real-time collaboration WebSocket server')
+        start_collab_parser.add_argument('--port', type=int, default=8765,
+                                       help='WebSocket server port (default: 8765)')
+        start_collab_parser.add_argument('--database', default='collaboration.db',
+                                       help='Database file path (default: collaboration.db)')
+        start_collab_parser.add_argument('--slack-webhook',
+                                       help='Slack webhook URL for notifications')
+        start_collab_parser.add_argument('--teams-webhook',
+                                       help='Microsoft Teams webhook URL for notifications')
+        start_collab_parser.add_argument('--daemon', action='store_true',
+                                       help='Run as daemon process')
+        
+        # Collaboration status command
+        collab_status_parser = subparsers.add_parser('collab-status',
+                                                    help='Check collaboration server status')
+        collab_status_parser.add_argument('--port', type=int, default=8765,
+                                        help='WebSocket server port (default: 8765)')
+        collab_status_parser.add_argument('--database', default='collaboration.db',
+                                        help='Database file path (default: collaboration.db)')
+        
+        # Stop collaboration server command
+        stop_collab_parser = subparsers.add_parser('stop-collab-server',
+                                                  help='Stop collaboration server')
+        
+        # Manage collaboration sessions
+        manage_sessions_parser = subparsers.add_parser('manage-sessions',
+                                                      help='Manage collaboration sessions')
+        manage_sessions_parser.add_argument('action', choices=['list', 'history'],
+                                          help='Action to perform')
+        manage_sessions_parser.add_argument('--database', default='collaboration.db',
+                                          help='Database file path (default: collaboration.db)')
+        manage_sessions_parser.add_argument('--document-id',
+                                          help='Document ID for history action')
+        
+        # Manage comments
+        manage_comments_parser = subparsers.add_parser('manage-comments',
+                                                      help='Manage document comments')
+        manage_comments_parser.add_argument('action', choices=['list', 'resolve'],
+                                          help='Action to perform')
+        manage_comments_parser.add_argument('--database', default='collaboration.db',
+                                          help='Database file path (default: collaboration.db)')
+        manage_comments_parser.add_argument('--document-id',
+                                          help='Filter by document ID')
+        manage_comments_parser.add_argument('--comment-id',
+                                          help='Comment ID for resolve action')
+        
+        # Manage reviews
+        manage_reviews_parser = subparsers.add_parser('manage-reviews',
+                                                     help='Manage review workflows')
+        manage_reviews_parser.add_argument('action', choices=['list', 'stats'],
+                                         help='Action to perform')
+        manage_reviews_parser.add_argument('--database', default='collaboration.db',
+                                         help='Database file path (default: collaboration.db)')
+        
         # Collaborative commands
         collab_parser = subparsers.add_parser('collaborate',
                                              help='Collaborative documentation workspace')
@@ -3331,6 +3425,68 @@ Examples:
         compliance_frameworks.add_argument('--json', action='store_true',
                                           help='Output as JSON')
         
+        # Quality Scoring commands
+        quality_analyze_parser = subparsers.add_parser('quality-analyze',
+                                                      help='Analyze documentation quality with advanced metrics')
+        quality_analyze_parser.add_argument('repository', help='Repository path')
+        quality_analyze_parser.add_argument('-t', '--project-type',
+                                          choices=['web-framework', 'library', 'cli-tool', 'api-service', 
+                                                  'mobile-app', 'desktop-app', 'data-science', 'other'],
+                                          default='library',
+                                          help='Project type for benchmarking (default: library)')
+        quality_analyze_parser.add_argument('--save-metrics', action='store_true',
+                                          help='Save metrics to database for historical tracking')
+        quality_analyze_parser.add_argument('--benchmark', action='store_true',
+                                          help='Include industry benchmark comparison')
+        quality_analyze_parser.add_argument('--suggestions', action='store_true',
+                                          help='Generate improvement suggestions')
+        quality_analyze_parser.add_argument('--format', choices=['text', 'json', 'html'],
+                                          default='text',
+                                          help='Output format (default: text)')
+        quality_analyze_parser.add_argument('-o', '--output',
+                                          help='Output file path')
+        
+        quality_history_parser = subparsers.add_parser('quality-history',
+                                                      help='View quality scoring history and trends')
+        quality_history_parser.add_argument('repository', help='Repository path')
+        quality_history_parser.add_argument('--days', type=int, default=30,
+                                          help='Number of days to look back (default: 30)')
+        quality_history_parser.add_argument('--format', choices=['text', 'json', 'csv'],
+                                          default='text',
+                                          help='Output format (default: text)')
+        quality_history_parser.add_argument('-o', '--output',
+                                          help='Output file path')
+        
+        quality_benchmark_parser = subparsers.add_parser('quality-benchmark',
+                                                        help='Compare quality against industry benchmarks')
+        quality_benchmark_parser.add_argument('repository', help='Repository path')
+        quality_benchmark_parser.add_argument('-t', '--project-type',
+                                            choices=['web-framework', 'library', 'cli-tool', 'api-service', 
+                                                    'mobile-app', 'desktop-app', 'data-science', 'other'],
+                                            default='library',
+                                            help='Project type for benchmarking (default: library)')
+        quality_benchmark_parser.add_argument('--format', choices=['text', 'json'],
+                                            default='text',
+                                            help='Output format (default: text)')
+        
+        quality_report_parser = subparsers.add_parser('quality-report',
+                                                     help='Generate comprehensive quality report')
+        quality_report_parser.add_argument('repository', help='Repository path')
+        quality_report_parser.add_argument('-t', '--project-type',
+                                         choices=['web-framework', 'library', 'cli-tool', 'api-service', 
+                                                 'mobile-app', 'desktop-app', 'data-science', 'other'],
+                                         default='library',
+                                         help='Project type for benchmarking (default: library)')
+        quality_report_parser.add_argument('--include-history', action='store_true',
+                                         help='Include historical trend analysis')
+        quality_report_parser.add_argument('--include-benchmark', action='store_true',
+                                         help='Include industry benchmark comparison')
+        quality_report_parser.add_argument('--format', choices=['text', 'html', 'markdown', 'json'],
+                                         default='html',
+                                         help='Output format (default: html)')
+        quality_report_parser.add_argument('-o', '--output',
+                                         help='Output file path')
+        
         # Parse arguments
         args = parser.parse_args()
         
@@ -3375,10 +3531,20 @@ Examples:
             'dashboard': self.dashboard_command,
             'custom-report': self.custom_report_command,
             'api': self.api_server_command,
+            'start-collab-server': self.start_collab_server_command,
+            'collab-status': self.collab_status_command,
+            'stop-collab-server': self.stop_collab_server_command,
+            'manage-sessions': self.manage_sessions_command,
+            'manage-comments': self.manage_comments_command,
+            'manage-reviews': self.manage_reviews_command,
             'hooks': self.hooks_command,
             'collaborate': self.collaborate_command,
             'user': self.user_command,
             'archive': self.archive_command,
+            'quality-analyze': self.quality_analyze_command,
+            'quality-history': self.quality_history_command,
+            'quality-benchmark': self.quality_benchmark_command,
+            'quality-report': self.quality_report_command,
             'compliance': self.compliance_command,
         }
         
@@ -3387,6 +3553,266 @@ Examples:
             return handler(args)
         else:
             parser.print_help()
+            return 1
+
+    def quality_analyze_command(self, args):
+        """Handle quality analyze command."""
+        try:
+            analyzer = QualityAnalyzer()
+            
+            # Run quality analysis
+            results = analyzer.analyze_repository(
+                args.repository,
+                project_type=args.project_type
+            )
+            
+            # Save metrics if requested
+            if args.save_metrics:
+                analyzer.save_metrics(args.repository, results.metrics)
+                print(f"✓ Quality metrics saved to database")
+            
+            # Generate output based on format
+            if args.format == 'json':
+                output = json.dumps({
+                    'overall_score': results.overall_score,
+                    'metrics': results.metrics.__dict__,
+                    'suggestions': results.suggestions,
+                    'documentation_debt': results.documentation_debt
+                }, indent=2)
+            elif args.format == 'html':
+                output = analyzer.generate_html_report(results, args.project_type)
+            else:
+                # Text format
+                output = f"""
+📊 AccuDoc Quality Analysis Report
+================================
+Repository: {args.repository}
+Project Type: {args.project_type}
+Analysis Date: {results.analysis_date}
+
+📈 Overall Quality Score: {results.overall_score:.1f}/100
+
+📋 Detailed Metrics:
+• Clarity Score: {results.metrics.clarity_score:.1f}/100
+  - Flesch Reading Ease: {results.metrics.flesch_reading_ease:.1f}
+  - Gunning Fog Index: {results.metrics.gunning_fog_index:.1f}
+  - Avg Sentence Length: {results.metrics.avg_sentence_length:.1f} words
+
+• Completeness Score: {results.metrics.completeness_score:.1f}/100
+  - Documentation Coverage: {results.metrics.documentation_coverage:.1f}%
+  - API Coverage: {results.metrics.api_coverage:.1f}%
+  - Required Sections: {results.metrics.required_sections_count}/{results.metrics.total_required_sections}
+
+• Accuracy Score: {results.metrics.accuracy_score:.1f}/100
+  - Broken Links: {results.metrics.broken_links_count}
+  - Outdated Content Score: {results.metrics.outdated_content_score:.1f}%
+  - Factual Consistency: {results.metrics.factual_consistency_score:.1f}%
+"""
+                
+                if args.benchmark and results.benchmark:
+                    output += f"""
+🏆 Industry Benchmark Comparison:
+• Industry Average: {results.benchmark['industry_average']:.1f}
+• Your Score: {results.overall_score:.1f} ({'+' if results.overall_score > results.benchmark['industry_average'] else ''}{results.overall_score - results.benchmark['industry_average']:.1f})
+• Percentile Rank: {results.benchmark['percentile_rank']}th percentile
+"""
+                
+                if args.suggestions and results.suggestions:
+                    output += f"""
+💡 Improvement Suggestions:
+{chr(10).join(f"• {suggestion}" for suggestion in results.suggestions)}
+"""
+                
+                output += f"""
+📊 Documentation Debt: {results.documentation_debt:.1f}
+"""
+            
+            # Write to file or print to stdout
+            if args.output:
+                with open(args.output, 'w', encoding='utf-8') as f:
+                    f.write(output)
+                print(f"✓ Quality analysis report saved to {args.output}")
+            else:
+                print(output)
+            
+            return 0
+            
+        except Exception as e:
+            print(f"❌ Error analyzing quality: {e}")
+            return 1
+
+    def quality_history_command(self, args):
+        """Handle quality history command."""
+        try:
+            analyzer = QualityAnalyzer()
+            history = analyzer.get_quality_history(args.repository, days=args.days)
+            
+            if args.format == 'json':
+                output = json.dumps([
+                    {
+                        'date': entry['analysis_date'],
+                        'overall_score': entry['overall_score'],
+                        'clarity_score': entry['clarity_score'],
+                        'completeness_score': entry['completeness_score'],
+                        'accuracy_score': entry['accuracy_score'],
+                        'documentation_debt': entry['documentation_debt']
+                    }
+                    for entry in history
+                ], indent=2)
+            elif args.format == 'csv':
+                output = "Date,Overall Score,Clarity,Completeness,Accuracy,Documentation Debt\n"
+                output += "\n".join([
+                    f"{entry['analysis_date']},{entry['overall_score']:.1f},{entry['clarity_score']:.1f},"
+                    f"{entry['completeness_score']:.1f},{entry['accuracy_score']:.1f},{entry['documentation_debt']:.1f}"
+                    for entry in history
+                ])
+            else:
+                # Text format
+                output = f"""
+📈 Quality History for {args.repository}
+======================================
+Last {args.days} days
+
+"""
+                for entry in history:
+                    output += f"""
+📅 {entry['analysis_date']}
+• Overall Score: {entry['overall_score']:.1f}/100
+• Clarity: {entry['clarity_score']:.1f}/100
+• Completeness: {entry['completeness_score']:.1f}/100  
+• Accuracy: {entry['accuracy_score']:.1f}/100
+• Documentation Debt: {entry['documentation_debt']:.1f}
+"""
+            
+            # Write to file or print to stdout
+            if args.output:
+                with open(args.output, 'w', encoding='utf-8') as f:
+                    f.write(output)
+                print(f"✓ Quality history saved to {args.output}")
+            else:
+                print(output)
+            
+            return 0
+            
+        except Exception as e:
+            print(f"❌ Error retrieving quality history: {e}")
+            return 1
+
+    def quality_benchmark_command(self, args):
+        """Handle quality benchmark command."""
+        try:
+            analyzer = QualityAnalyzer()
+            benchmark = analyzer.get_industry_benchmark(args.project_type)
+            
+            # Get current score for comparison
+            results = analyzer.analyze_repository(args.repository, project_type=args.project_type)
+            
+            if args.format == 'json':
+                output = json.dumps({
+                    'project_type': args.project_type,
+                    'industry_benchmark': benchmark,
+                    'your_score': results.overall_score,
+                    'percentile_rank': analyzer.calculate_percentile_rank(results.overall_score, args.project_type)
+                }, indent=2)
+            else:
+                # Text format
+                percentile = analyzer.calculate_percentile_rank(results.overall_score, args.project_type)
+                output = f"""
+🏆 Industry Benchmark Comparison
+===============================
+Project Type: {args.project_type}
+Repository: {args.repository}
+
+📊 Benchmark Results:
+• Industry Average: {benchmark['average']:.1f}/100
+• Industry Median: {benchmark['median']:.1f}/100
+• 75th Percentile: {benchmark['p75']:.1f}/100
+• 90th Percentile: {benchmark['p90']:.1f}/100
+
+📈 Your Performance:
+• Your Score: {results.overall_score:.1f}/100
+• Difference from Average: {'+' if results.overall_score > benchmark['average'] else ''}{results.overall_score - benchmark['average']:.1f}
+• Percentile Rank: {percentile}th percentile
+
+🎯 Performance Level: {analyzer.get_performance_level(percentile)}
+"""
+            
+            print(output)
+            return 0
+            
+        except Exception as e:
+            print(f"❌ Error getting benchmark data: {e}")
+            return 1
+
+    def quality_report_command(self, args):
+        """Handle quality report command."""
+        try:
+            analyzer = QualityAnalyzer()
+            
+            # Run comprehensive analysis
+            results = analyzer.analyze_repository(args.repository, project_type=args.project_type)
+            
+            # Get history if requested
+            history = None
+            if args.include_history:
+                history = analyzer.get_quality_history(args.repository, days=90)
+            
+            # Get benchmark if requested
+            benchmark = None
+            if args.include_benchmark:
+                benchmark = analyzer.get_industry_benchmark(args.project_type)
+            
+            # Generate report based on format
+            if args.format == 'html':
+                output = analyzer.generate_html_report(
+                    results, 
+                    args.project_type,
+                    history=history,
+                    benchmark=benchmark
+                )
+            elif args.format == 'markdown':
+                output = analyzer.generate_markdown_report(
+                    results,
+                    args.project_type,
+                    history=history,
+                    benchmark=benchmark
+                )
+            elif args.format == 'json':
+                report_data = {
+                    'repository': args.repository,
+                    'project_type': args.project_type,
+                    'analysis_date': results.analysis_date,
+                    'overall_score': results.overall_score,
+                    'metrics': results.metrics.__dict__,
+                    'suggestions': results.suggestions,
+                    'documentation_debt': results.documentation_debt
+                }
+                if history:
+                    report_data['history'] = history
+                if benchmark:
+                    report_data['benchmark'] = benchmark
+                output = json.dumps(report_data, indent=2)
+            else:
+                # Text format (comprehensive)
+                output = analyzer.generate_text_report(
+                    results,
+                    args.project_type, 
+                    history=history,
+                    benchmark=benchmark
+                )
+            
+            # Save or display report
+            if args.output:
+                with open(args.output, 'w', encoding='utf-8') as f:
+                    f.write(output)
+                print(f"✓ Comprehensive quality report saved to {args.output}")
+            else:
+                print(output)
+            
+            return 0
+            
+        except Exception as e:
+            print(f"❌ Error generating quality report: {e}")
             return 1
 
 

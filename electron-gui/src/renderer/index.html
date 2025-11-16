@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AccuDoc - Automated Documentation Generator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../../node_modules/@xterm/xterm/css/xterm.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="app-title">AccuDoc</h1>
+                <p class="app-subtitle">Documentation Generator</p>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-view="home">
+                    <span class="icon">🏠</span>
+                    <span class="label">Home</span>
+                </button>
+                <button class="nav-item" data-view="scan">
+                    <span class="icon">🔍</span>
+                    <span class="label">Scan Repository</span>
+                </button>
+                <button class="nav-item" data-view="generate">
+                    <span class="icon">📝</span>
+                    <span class="label">Generate Docs</span>
+                </button>
+                <button class="nav-item" data-view="analysis">
+                    <span class="icon">📊</span>
+                    <span class="label">Code Analysis</span>
+                </button>
+                <button class="nav-item" data-view="health">
+                    <span class="icon">❤️</span>
+                    <span class="label">Health Dashboard</span>
+                </button>
+                <button class="nav-item" data-view="export">
+                    <span class="icon">💾</span>
+                    <span class="label">Export</span>
+                </button>
+                <button class="nav-item" data-view="opensource">
+                    <span class="icon">📄</span>
+                    <span class="label">Open Source</span>
+                </button>
+                <button class="nav-item" data-view="batch">
+                    <span class="icon">📦</span>
+                    <span class="label">Batch Processing</span>
+                </button>
+                <button class="nav-item" data-view="comparison">
+                    <span class="icon">⚖️</span>
+                    <span class="label">Compare & Trends</span>
+                </button>
+                <button class="nav-item" data-view="quality">
+                    <span class="icon">🔍</span>
+                    <span class="label">Quality Tools</span>
+                </button>
+                <button class="nav-item" data-view="collaboration">
+                    <span class="icon">👥</span>
+                    <span class="label">Collaboration</span>
+                </button>
+                <button class="nav-item" data-view="enterprise">
+                    <span class="icon">🏢</span>
+                    <span class="label">Enterprise</span>
+                </button>
+                <button class="nav-item" data-view="terminal">
+                    <span class="icon">⌨️</span>
+                    <span class="label">Terminal</span>
+                </button>
+                <button class="nav-item" data-view="settings">
+                    <span class="icon">⚙️</span>
+                    <span class="label">Settings</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Home View -->
+            <div id="home-view" class="content-view active">
+                <div class="view-header">
+                    <h2>Welcome to AccuDoc</h2>
+                    <p>Automated Repository Documentation Generator</p>
+                </div>
+                <div class="quick-actions">
+                    <div class="action-card" data-action="scan">
+                        <div class="card-icon">🔍</div>
+                        <h3>Scan Repository</h3>
+                        <p>Analyze a repository to extract information</p>
+                        <button class="btn btn-primary">Start Scan</button>
+                    </div>
+                    <div class="action-card" data-action="generate">
+                        <div class="card-icon">📝</div>
+                        <h3>Generate Documentation</h3>
+                        <p>Create comprehensive documentation</p>
+                        <button class="btn btn-primary">Generate</button>
+                    </div>
+                    <div class="action-card" data-action="health">
+                        <div class="card-icon">❤️</div>
+                        <h3>Health Check</h3>
+                        <p>Analyze project health metrics</p>
+                        <button class="btn btn-primary">Check Health</button>
+                    </div>
+                </div>
+                <div class="recent-repos">
+                    <h3>Recent Repositories</h3>
+                    <div id="recent-list" class="repo-list"></div>
+                </div>
+            </div>
+
+            <!-- Scan View -->
+            <div id="scan-view" class="content-view">
+                <div class="view-header">
+                    <h2>Scan Repository</h2>
+                </div>
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="scan-repo-path">Repository Path or URL</label>
+                        <div class="input-group">
+                            <input type="text" id="scan-repo-path" placeholder="Enter repository path or URL">
+                            <button id="scan-browse-btn" class="btn btn-secondary">Browse</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="scan-use-cache">
+                            Use cache (faster for repeated scans)
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="scan-json-output">
+                            Output JSON results
+                        </label>
+                    </div>
+                    <button id="scan-start-btn" class="btn btn-primary btn-large">Start Scan</button>
+                </div>
+                <div class="output-section">
+                    <h3>Scan Results</h3>
+                    <div id="scan-output" class="output-box"></div>
+                </div>
+            </div>
+
+            <!-- Generate View -->
+            <div id="generate-view" class="content-view">
+                <div class="view-header">
+                    <h2>Generate Documentation</h2>
+                </div>
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="gen-repo-path">Repository Path or URL</label>
+                        <div class="input-group">
+                            <input type="text" id="gen-repo-path" placeholder="Enter repository path or URL">
+                            <button id="gen-browse-btn" class="btn btn-secondary">Browse</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="gen-output-path">Local Output Path</label>
+                        <div class="input-group">
+                            <input type="text" id="gen-output-path" placeholder="Local path to save documentation">
+                            <button id="gen-output-browse-btn" class="btn btn-secondary">Browse</button>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="gen-template">Template</label>
+                            <select id="gen-template">
+                                <option value="default">Default</option>
+                                <option value="minimal">Minimal</option>
+                                <option value="detailed">Detailed</option>
+                                <option value="api">API Reference</option>
+                                <option value="readme">README Style</option>
+                                <option value="student">Student Project</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="gen-format">Format</label>
+                            <select id="gen-format">
+                                <option value="markdown">Markdown</option>
+                                <option value="html">HTML</option>
+                                <option value="pdf">PDF</option>
+                                <option value="text">Plain Text</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="gen-language">Language</label>
+                            <select id="gen-language">
+                                <option value="en">English</option>
+                                <option value="es">Español</option>
+                                <option value="fr">Français</option>
+                                <option value="de">Deutsch</option>
+                                <option value="zh">中文</option>
+                                <option value="ja">日本語</option>
+                                <option value="ar">العربية</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="gen-theme">HTML Theme</label>
+                            <select id="gen-theme">
+                                <option value="default">Default</option>
+                                <option value="dark">Dark</option>
+                                <option value="minimal">Minimal</option>
+                                <option value="corporate">Corporate</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button id="gen-start-btn" class="btn btn-primary btn-large">Generate Documentation</button>
+                </div>
+                <div class="output-section">
+                    <h3>Generation Output</h3>
+                    <div id="gen-output" class="output-box"></div>
+                </div>
+            </div>
+
+            <!-- Analysis View -->
+            <div id="analysis-view" class="content-view">
+                <div class="view-header">
+                    <h2>Code Analysis</h2>
+                </div>
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="analysis-repo-path">Repository Path</label>
+                        <div class="input-group">
+                            <input type="text" id="analysis-repo-path" placeholder="Enter repository path">
+                            <button id="analysis-browse-btn" class="btn btn-secondary">Browse</button>
+                        </div>
+                    </div>
+                    <div class="analysis-options">
+                        <button id="analysis-complexity-btn" class="btn btn-secondary">Complexity Analysis</button>
+                        <button id="analysis-practices-btn" class="btn btn-secondary">Best Practices</button>
+                        <button id="analysis-callgraph-btn" class="btn btn-secondary">Call Graph</button>
+                        <button id="analysis-completeness-btn" class="btn btn-secondary">Completeness Score</button>
+                        <button id="analysis-quality-btn" class="btn btn-secondary">🎯 Quality Scoring</button>
+                    </div>
+                </div>
+                <div class="output-section">
+                    <h3>Analysis Results</h3>
+                    <div id="analysis-output" class="output-box"></div>
+                </div>
+            </div>
+
+            <!-- Health Dashboard View -->
+            <div id="health-view" class="content-view">
+                <div class="view-header">
+                    <h2>Project Health Dashboard</h2>
+                </div>
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="health-repo-path">Repository Path or URL</label>
+                        <div class="input-group">
+                            <input type="text" id="health-repo-path" placeholder="Enter repository path or URL">
+                            <button id="health-browse-btn" class="btn btn-secondary">Browse</button>
+                        </div>
+                    </div>
+                    <button id="health-check-btn" class="btn btn-primary btn-large">Check Health</button>
+                </div>
+                <div id="health-dashboard" class="health-dashboard"></div>
+            </div>
+
+            <!-- Export View -->
+            <div id="export-view" class="content-view">
+                <div class="view-header">
+                    <h2>Export Data</h2>
+                </div>
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="export-repo-path">Repository Path</label>
+                        <div class="input-group">
+                            <input type="text" id="export-repo-path" placeholder="Enter repository path">
+                            <button id="export-browse-btn" class="btn btn-secondary">Browse</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="export-format">Export Format</label>
+                        <select id="export-format">
+                            <option value="csv">CSV Reports</option>
+                            <option value="json">JSON Data</option>
+                            <option value="summary">Summary CSV</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="export-output">Output Directory</label>
+                        <div class="input-group">
+                            <input type="text" id="export-output" placeholder="Where to save exports">
+                            <button id="export-output-browse-btn" class="btn btn-secondary">Browse</button>
+                        </div>
+                    </div>
+                    <button id="export-start-btn" class="btn btn-primary btn-large">Export Data</button>
+                </div>
+                <div class="output-section">
+                    <h3>Export Results</h3>
+                    <div id="export-output" class="output-box"></div>
+                </div>
+            </div>
+
+            <!-- Open Source Docs View -->
+            <div id="opensource-view" class="content-view">
+                <div class="view-header">
+                    <h2>Generate Open Source Documentation</h2>
+                </div>
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="os-repo-path">Repository Path</label>
+                        <div class="input-group">
+                            <input type="text" id="os-repo-path" placeholder="Enter repository path">
+                            <button id="os-browse-btn" class="btn btn-secondary">Browse</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Documents to Generate:</label>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" id="os-contributing" checked> CONTRIBUTING.md</label>
+                            <label><input type="checkbox" id="os-conduct" checked> CODE_OF_CONDUCT.md</label>
+                            <label><input type="checkbox" id="os-issues" checked> Issue Templates</label>
+                        </div>
+                    </div>
+                    <button id="os-generate-btn" class="btn btn-primary btn-large">Generate Open Source Docs</button>
+                </div>
+                <div class="output-section">
+                    <h3>Generated Files</h3>
+                    <div id="os-output" class="output-box"></div>
+                </div>
+            </div>
+
+            <!-- Batch Processing View -->
+            <div id="batch-view" class="content-view">
+                <div class="view-header">
+                    <h2>Batch Processing</h2>
+                    <p>Process multiple repositories simultaneously</p>
+                </div>
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="batch-config">Batch Configuration File:</label>
+                        <div class="input-group">
+                            <input type="text" id="batch-config" placeholder="Path to batch.json configuration file">
+                            <button id="batch-browse-btn" class="btn btn-secondary">Browse</button>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="batch-workers">Worker Threads:</label>
+                            <select id="batch-workers">
+                                <option value="1">1</option>
+                                <option value="2" selected>2</option>
+                                <option value="4">4</option>
+                                <option value="8">8</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="batch-output">Output Directory:</label>
+                            <div class="input-group">
+                                <input type="text" id="batch-output" placeholder="Where to save results">
+                                <button id="batch-output-browse-btn" class="btn btn-secondary">Browse</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="batch-start-btn" class="btn btn-primary btn-large">Start Batch Processing</button>
+                    <button id="batch-create-config-btn" class="btn btn-secondary">Create Sample Config</button>
+                </div>
+                <div class="output-section">
+                    <h3>Batch Progress</h3>
+                    <div id="batch-progress" class="progress-container"></div>
+                    <div id="batch-output" class="output-box"></div>
+                </div>
+            </div>
+
+            <!-- Comparison & Trends View -->
+            <div id="comparison-view" class="content-view">
+                <div class="view-header">
+                    <h2>Compare & Trends</h2>
+                    <p>Compare repositories and analyze trends over time</p>
+                </div>
+                <div class="tab-container">
+                    <button class="tab-btn active" data-tab="compare">Repository Comparison</button>
+                    <button class="tab-btn" data-tab="trends">Trend Analysis</button>
+                    <button class="tab-btn" data-tab="branch-compare">Branch Comparison</button>
+                    <button class="tab-btn" data-tab="version-check">Version Check</button>
+                </div>
+                
+                <!-- Repository Comparison Tab -->
+                <div id="compare-tab" class="tab-content active">
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label>Repositories to Compare:</label>
+                            <div id="repo-list" class="repo-list">
+                                <div class="repo-item">
+                                    <input type="text" placeholder="Repository path or URL" class="repo-input">
+                                    <button class="btn btn-secondary browse-repo">Browse</button>
+                                    <button class="btn btn-danger remove-repo">Remove</button>
+                                </div>
+                            </div>
+                            <button id="add-repo-btn" class="btn btn-secondary">Add Repository</button>
+                        </div>
+                        <button id="compare-start-btn" class="btn btn-primary btn-large">Compare Repositories</button>
+                    </div>
+                    <div id="compare-results" class="results-section"></div>
+                </div>
+                
+                <!-- Trend Analysis Tab -->
+                <div id="trends-tab" class="tab-content">
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="trends-repo">Repository Path or URL:</label>
+                            <div class="input-group">
+                                <input type="text" id="trends-repo" placeholder="Enter repository path or URL">
+                                <button id="trends-browse-btn" class="btn btn-secondary">Browse</button>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="trends-period">Time Period:</label>
+                                <select id="trends-period">
+                                    <option value="week">Week</option>
+                                    <option value="month" selected>Month</option>
+                                    <option value="quarter">Quarter</option>
+                                    <option value="year">Year</option>
+                                    <option value="all">All History</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="trends-points">Data Points:</label>
+                                <select id="trends-points">
+                                    <option value="10" selected>10</option>
+                                    <option value="20">20</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button id="trends-analyze-btn" class="btn btn-primary btn-large">Analyze Trends</button>
+                    </div>
+                    <div id="trends-results" class="results-section"></div>
+                </div>
+
+                <!-- Branch Comparison Tab -->
+                <div id="branch-compare-tab" class="tab-content">
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="branch-repo">Repository Path:</label>
+                            <div class="input-group">
+                                <input type="text" id="branch-repo" placeholder="Local repository path">
+                                <button id="branch-browse-btn" class="btn btn-secondary">Browse</button>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="branch-from">From Branch/Tag:</label>
+                                <input type="text" id="branch-from" placeholder="e.g., main, v1.0.0">
+                            </div>
+                            <div class="form-group">
+                                <label for="branch-to">To Branch/Tag:</label>
+                                <input type="text" id="branch-to" placeholder="e.g., develop, v2.0.0">
+                            </div>
+                        </div>
+                        <button id="branch-compare-btn" class="btn btn-primary btn-large">Compare Branches</button>
+                    </div>
+                    <div id="branch-results" class="results-section"></div>
+                </div>
+
+                <!-- Version Check Tab -->
+                <div id="version-check-tab" class="tab-content">
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="version-repo">Repository Path or URL:</label>
+                            <div class="input-group">
+                                <input type="text" id="version-repo" placeholder="Enter repository path or URL">
+                                <button id="version-browse-btn" class="btn btn-secondary">Browse</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="version-threshold">Staleness Threshold (days):</label>
+                            <select id="version-threshold">
+                                <option value="7">7 days</option>
+                                <option value="14">14 days</option>
+                                <option value="30" selected>30 days</option>
+                                <option value="90">90 days</option>
+                            </select>
+                        </div>
+                        <button id="version-check-btn" class="btn btn-primary btn-large">Check Version Status</button>
+                    </div>
+                    <div id="version-results" class="results-section"></div>
+                </div>
+            </div>
+
+            <!-- Quality Tools View -->
+            <div id="quality-view" class="content-view">
+                <div class="view-header">
+                    <h2>Quality Tools</h2>
+                    <p>Advanced document quality analysis and improvement tools</p>
+                </div>
+                <div class="tab-container">
+                    <button class="tab-btn active" data-tab="spellcheck">Spell Check</button>
+                    <button class="tab-btn" data-tab="grammar">Grammar Check</button>
+                    <button class="tab-btn" data-tab="readability">Readability</button>
+                    <button class="tab-btn" data-tab="db-schema">Database Schema</button>
+                    <button class="tab-btn" data-tab="monorepo">Monorepo Analysis</button>
+                    <button class="tab-btn" data-tab="breaking-changes">Breaking Changes</button>
+                </div>
+
+                <!-- Spell Check Tab -->
+                <div id="spellcheck-tab" class="tab-content active">
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="spell-path">File or Directory Path:</label>
+                            <div class="input-group">
+                                <input type="text" id="spell-path" placeholder="Path to check spelling">
+                                <button id="spell-browse-btn" class="btn btn-secondary">Browse</button>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="spell-extensions">File Extensions:</label>
+                                <input type="text" id="spell-extensions" placeholder=".md,.txt,.rst" value=".md,.txt">
+                            </div>
+                            <div class="form-group">
+                                <label for="spell-dictionary">Dictionary:</label>
+                                <select id="spell-dictionary">
+                                    <option value="en_US" selected>English (US)</option>
+                                    <option value="en_GB">English (UK)</option>
+                                    <option value="es">Spanish</option>
+                                    <option value="fr">French</option>
+                                    <option value="de">German</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button id="spell-check-btn" class="btn btn-primary btn-large">Check Spelling</button>
+                    </div>
+                    <div id="spell-results" class="results-section"></div>
+                </div>
+
+                <!-- Grammar Check Tab -->
+                <div id="grammar-tab" class="tab-content">
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="grammar-path">File or Directory Path:</label>
+                            <div class="input-group">
+                                <input type="text" id="grammar-path" placeholder="Path to check grammar">
+                                <button id="grammar-browse-btn" class="btn btn-secondary">Browse</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="grammar-extensions">File Extensions:</label>
+                            <input type="text" id="grammar-extensions" placeholder=".md,.txt,.rst" value=".md,.txt">
+                        </div>
+                        <button id="grammar-check-btn" class="btn btn-primary btn-large">Check Grammar</button>
+                    </div>
+                    <div id="grammar-results" class="results-section"></div>
+                </div>
+
+                <!-- Readability Tab -->
+                <div id="readability-tab" class="tab-content">
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="readability-path">File or Directory Path:</label>
+                            <div class="input-group">
+                                <input type="text" id="readability-path" placeholder="Path to analyze readability">
+                                <button id="readability-browse-btn" class="btn btn-secondary">Browse</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="readability-extensions">File Extensions:</label>
+                            <input type="text" id="readability-extensions" placeholder=".md,.txt,.rst" value=".md,.txt">
+                        </div>
+                        <button id="readability-analyze-btn" class="btn btn-primary btn-large">Analyze Readability</button>
+                    </div>
+                    <div id="readability-results" class="results-section"></div>
+                </div>
+
+                <!-- Database Schema Tab -->
+                <div id="db-schema-tab" class="tab-content">
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="db-repo">Repository Path:</label>
+                            <div class="input-group">
+                                <input type="text" id="db-repo" placeholder="Repository containing database files">
+                                <button id="db-browse-btn" class="btn btn-secondary">Browse</button>
+                            </div>
+                        </div>
+                        <button id="db-extract-btn" class="btn btn-primary btn-large">Extract Database Schema</button>
+                    </div>
+                    <div id="db-results" class="results-section"></div>
+                </div>
+
+                <!-- Monorepo Analysis Tab -->
+                <div id="monorepo-tab" class="tab-content">
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="monorepo-path">Monorepo Path:</label>
+                            <div class="input-group">
+                                <input type="text" id="monorepo-path" placeholder="Path to monorepo">
+                                <button id="monorepo-browse-btn" class="btn btn-secondary">Browse</button>
+                            </div>
+                        </div>
+                        <button id="monorepo-analyze-btn" class="btn btn-primary btn-large">Analyze Monorepo</button>
+                    </div>
+                    <div id="monorepo-results" class="results-section"></div>
+                </div>
+
+                <!-- Breaking Changes Tab -->
+                <div id="breaking-changes-tab" class="tab-content">
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="breaking-repo">Repository Path:</label>
+                            <div class="input-group">
+                                <input type="text" id="breaking-repo" placeholder="Repository path">
+                                <button id="breaking-browse-btn" class="btn btn-secondary">Browse</button>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="breaking-from">From Version:</label>
+                                <input type="text" id="breaking-from" placeholder="e.g., v1.0.0, main">
+                            </div>
+                            <div class="form-group">
+                                <label for="breaking-to">To Version:</label>
+                                <input type="text" id="breaking-to" placeholder="e.g., v2.0.0, develop">
+                            </div>
+                        </div>
+                        <button id="breaking-detect-btn" class="btn btn-primary btn-large">Detect Breaking Changes</button>
+                    </div>
+                    <div id="breaking-results" class="results-section"></div>
+                </div>
+            </div>
+
+            <!-- Collaboration View -->
+            <div id="collaboration-view" class="content-view">
+                <div class="view-header">
+                    <h2>Collaboration</h2>
+                    <p>Real-time collaborative documentation editing</p>
+                </div>
+                <div class="tab-container">
+                    <button class="tab-btn active" data-tab="sessions">Sessions</button>
+                    <button class="tab-btn" data-tab="users">Users & Teams</button>
+                    <button class="tab-btn" data-tab="comments">Comments</button>
+                    <button class="tab-btn" data-tab="api-server">API Server</button>
+                </div>
+
+                <!-- Sessions Tab -->
+                <div id="sessions-tab" class="tab-content active">
+                    <div class="form-section">
+                        <h3>Create New Session</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="session-name">Session Name:</label>
+                                <input type="text" id="session-name" placeholder="My Documentation Session">
+                            </div>
+                            <div class="form-group">
+                                <label for="session-repo">Repository:</label>
+                                <div class="input-group">
+                                    <input type="text" id="session-repo" placeholder="Repository path">
+                                    <button id="session-browse-btn" class="btn btn-secondary">Browse</button>
+                                </div>
+                            </div>
+                        </div>
+                        <button id="create-session-btn" class="btn btn-primary">Create Session</button>
+                        
+                        <h3>Join Existing Session</h3>
+                        <div class="form-group">
+                            <label for="join-session-id">Session ID:</label>
+                            <input type="text" id="join-session-id" placeholder="Enter session ID">
+                        </div>
+                        <button id="join-session-btn" class="btn btn-secondary">Join Session</button>
+                    </div>
+                    <div id="sessions-list" class="sessions-list"></div>
+                </div>
+
+                <!-- Users & Teams Tab -->
+                <div id="users-tab" class="tab-content">
+                    <div class="form-section">
+                        <h3>Create User</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="user-name">Username:</label>
+                                <input type="text" id="user-name" placeholder="john.doe">
+                            </div>
+                            <div class="form-group">
+                                <label for="user-email">Email:</label>
+                                <input type="email" id="user-email" placeholder="john@example.com">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="user-role">Role:</label>
+                                <select id="user-role">
+                                    <option value="viewer">Viewer</option>
+                                    <option value="editor" selected>Editor</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="owner">Owner</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button id="create-user-btn" class="btn btn-primary">Create User</button>
+
+                        <h3>Create Team</h3>
+                        <div class="form-group">
+                            <label for="team-name">Team Name:</label>
+                            <input type="text" id="team-name" placeholder="Documentation Team">
+                        </div>
+                        <button id="create-team-btn" class="btn btn-secondary">Create Team</button>
+                    </div>
+                    <div id="users-results" class="results-section"></div>
+                </div>
+
+                <!-- Comments Tab -->
+                <div id="comments-tab" class="tab-content">
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="comment-session">Session ID:</label>
+                            <input type="text" id="comment-session" placeholder="Session ID">
+                        </div>
+                        <div class="form-group">
+                            <label for="comment-line">Line Number:</label>
+                            <input type="number" id="comment-line" placeholder="Line number">
+                        </div>
+                        <div class="form-group">
+                            <label for="comment-text">Comment:</label>
+                            <textarea id="comment-text" placeholder="Add your comment here..."></textarea>
+                        </div>
+                        <button id="add-comment-btn" class="btn btn-primary">Add Comment</button>
+                    </div>
+                    <div id="comments-results" class="results-section"></div>
+                </div>
+
+                <!-- API Server Tab -->
+                <div id="api-server-tab" class="tab-content">
+                    <div class="form-section">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="api-host">Host:</label>
+                                <input type="text" id="api-host" value="localhost" placeholder="localhost">
+                            </div>
+                            <div class="form-group">
+                                <label for="api-port">Port:</label>
+                                <input type="number" id="api-port" value="5000" placeholder="5000">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="api-debug"> Debug Mode
+                            </label>
+                        </div>
+                        <button id="start-api-btn" class="btn btn-primary btn-large">Start API Server</button>
+                        <button id="stop-api-btn" class="btn btn-danger hidden">Stop API Server</button>
+                    </div>
+                    <div id="api-status" class="api-status"></div>
+                </div>
+            </div>
+
+            <!-- Enterprise View -->
+            <div id="enterprise-view" class="content-view">
+                <div class="view-header">
+                    <h2>Enterprise Features</h2>
+                    <p>Advanced enterprise-grade documentation management</p>
+                </div>
+                <div class="tab-container">
+                    <button class="tab-btn active" data-tab="dashboard">Multi-Repo Dashboard</button>
+                    <button class="tab-btn" data-tab="custom-reports">Custom Reports</button>
+                    <button class="tab-btn" data-tab="hooks">Hooks System</button>
+                    <button class="tab-btn" data-tab="archive">Archive System</button>
+                    <button class="tab-btn" data-tab="onboarding">Onboarding</button>
+                    <button class="tab-btn" data-tab="compliance">Compliance</button>
+                </div>
+
+                <!-- Multi-Repo Dashboard Tab -->
+                <div id="dashboard-tab" class="tab-content active">
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="dashboard-repos">Repository List:</label>
+                            <textarea id="dashboard-repos" placeholder="Enter repository paths or URLs, one per line"></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="dashboard-threshold">Completeness Threshold:</label>
+                                <input type="number" id="dashboard-threshold" value="60" min="0" max="100">
+                            </div>
+                            <div class="form-group">
+                                <label for="dashboard-style">Style Guide:</label>
+                                <select id="dashboard-style">
+                                    <option value="google">Google</option>
+                                    <option value="microsoft">Microsoft</option>
+                                    <option value="plain-language">Plain Language</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button id="dashboard-generate-btn" class="btn btn-primary btn-large">Generate Dashboard</button>
+                    </div>
+                    <div id="dashboard-results" class="results-section"></div>
+                </div>
+
+                <!-- Custom Reports Tab -->
+                <div id="custom-reports-tab" class="tab-content">
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="report-template">Template File:</label>
+                            <div class="input-group">
+                                <input type="text" id="report-template" placeholder="Path to report template JSON">
+                                <button id="report-browse-btn" class="btn btn-secondary">Browse</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="report-repo">Repository:</label>
+                            <div class="input-group">
+                                <input type="text" id="report-repo" placeholder="Repository path or URL">
+                                <button id="report-repo-browse-btn" class="btn btn-secondary">Browse</button>
+                            </div>
+                        </div>
+                        <button id="report-generate-btn" class="btn btn-primary btn-large">Generate Custom Report</button>
+                        <button id="report-create-template-btn" class="btn btn-secondary">Create Template</button>
+                    </div>
+                    <div id="report-results" class="results-section"></div>
+                </div>
+
+                <!-- Hooks System Tab -->
+                <div id="hooks-tab" class="tab-content">
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="hook-event">Hook Event:</label>
+                            <select id="hook-event">
+                                <option value="before_scan">Before Scan</option>
+                                <option value="after_scan">After Scan</option>
+                                <option value="before_generate">Before Generate</option>
+                                <option value="after_generate">After Generate</option>
+                                <option value="before_export">Before Export</option>
+                                <option value="after_export">After Export</option>
+                                <option value="before_file_analysis">Before File Analysis</option>
+                                <option value="after_file_analysis">After File Analysis</option>
+                                <option value="before_health_metrics">Before Health Metrics</option>
+                                <option value="after_health_metrics">After Health Metrics</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="hook-name">Hook Name:</label>
+                                <input type="text" id="hook-name" placeholder="my_hook">
+                            </div>
+                            <div class="form-group">
+                                <label for="hook-priority">Priority:</label>
+                                <input type="number" id="hook-priority" value="10" min="1" max="100">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="hook-command">Command:</label>
+                            <input type="text" id="hook-command" placeholder="python my_script.py">
+                        </div>
+                        <button id="hooks-register-btn" class="btn btn-primary">Register Hook</button>
+                        <button id="hooks-list-btn" class="btn btn-secondary">List Hooks</button>
+                    </div>
+                    <div id="hooks-results" class="results-section"></div>
+                </div>
+
+                <!-- Archive System Tab -->
+                <div id="archive-tab" class="tab-content">
+                    <div class="form-section">
+                        <h3>Create Archive</h3>
+                        <div class="form-group">
+                            <label for="archive-repo">Repository:</label>
+                            <div class="input-group">
+                                <input type="text" id="archive-repo" placeholder="Repository path">
+                                <button id="archive-browse-btn" class="btn btn-secondary">Browse</button>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="archive-formats">Formats:</label>
+                                <div class="checkbox-group">
+                                    <label><input type="checkbox" id="archive-md" checked> Markdown</label>
+                                    <label><input type="checkbox" id="archive-html"> HTML</label>
+                                    <label><input type="checkbox" id="archive-pdf"> PDF</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="archive-tags">Tags (comma-separated):</label>
+                            <input type="text" id="archive-tags" placeholder="release, v1.0, stable">
+                        </div>
+                        <button id="archive-create-btn" class="btn btn-primary">Create Archive</button>
+                        
+                        <h3>Manage Archives</h3>
+                        <button id="archive-list-btn" class="btn btn-secondary">List Archives</button>
+                        <button id="archive-stats-btn" class="btn btn-secondary">View Statistics</button>
+                    </div>
+                    <div id="archive-results" class="results-section"></div>
+                </div>
+
+                <!-- Onboarding Tab -->
+                <div id="onboarding-tab" class="tab-content">
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="onboarding-repo">Repository:</label>
+                            <div class="input-group">
+                                <input type="text" id="onboarding-repo" placeholder="Repository path">
+                                <button id="onboarding-browse-btn" class="btn btn-secondary">Browse</button>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="onboarding-role">Target Role:</label>
+                                <select id="onboarding-role">
+                                    <option value="developer">Developer</option>
+                                    <option value="contributor">Contributor</option>
+                                    <option value="maintainer">Maintainer</option>
+                                    <option value="user">User</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="onboarding-experience">Experience Level:</label>
+                                <select id="onboarding-experience">
+                                    <option value="beginner">Beginner</option>
+                                    <option value="intermediate">Intermediate</option>
+                                    <option value="advanced">Advanced</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button id="onboarding-generate-btn" class="btn btn-primary btn-large">Generate Onboarding Guide</button>
+                    </div>
+                    <div id="onboarding-results" class="results-section"></div>
+                </div>
+
+                <!-- Compliance Tab -->
+                <div id="compliance-tab" class="tab-content">
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="compliance-repo">Repository:</label>
+                            <div class="input-group">
+                                <input type="text" id="compliance-repo" placeholder="Repository path">
+                                <button id="compliance-browse-btn" class="btn btn-secondary">Browse</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="compliance-framework">Compliance Framework:</label>
+                            <select id="compliance-framework">
+                                <option value="soc2">SOC 2</option>
+                                <option value="hipaa">HIPAA</option>
+                                <option value="gdpr">GDPR</option>
+                                <option value="iso27001">ISO 27001</option>
+                                <option value="pci-dss">PCI DSS</option>
+                            </select>
+                        </div>
+                        <button id="compliance-analyze-btn" class="btn btn-primary btn-large">Analyze Compliance</button>
+                    </div>
+                    <div id="compliance-results" class="results-section"></div>
+                </div>
+            </div>
+
+            <!-- Terminal View -->
+            <div id="terminal-view" class="content-view">
+                <div class="view-header">
+                    <h2>Terminal</h2>
+                    <p>Direct access to AccuDoc CLI</p>
+                </div>
+                <div id="terminal-container"></div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="settings-view" class="content-view">
+                <div class="view-header">
+                    <h2>Settings</h2>
+                </div>
+                <div class="settings-section">
+                    <h3>General</h3>
+                    <div class="form-group">
+                        <label for="settings-theme" class="disabled-label">Application Theme</label>
+                        <select id="settings-theme" disabled class="disabled-select">
+                            <option value="">In Development</option>
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                            <option value="auto">Auto</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="settings-python">Python Path</label>
+                        <input type="text" id="settings-python" placeholder="Auto-detected">
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>Performance</h3>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="settings-cache" checked>
+                            Enable caching for faster scans
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="settings-parallel" checked>
+                            Enable parallel processing
+                        </label>
+                    </div>
+                </div>
+                <button id="settings-save-btn" class="btn btn-primary">Save Settings</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <span id="status-text">Ready</span>
+        <span id="status-repo"></span>
+    </div>
+
+    <script src="collaboration.js"></script>
+    <script src="renderer.js"></script>
+</body>
+</html>

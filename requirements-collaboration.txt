@@ -1,0 +1,3 @@
+# Additional requirements for AccuDoc Real-Time Collaboration
+websockets>=12.0
+sqlite3

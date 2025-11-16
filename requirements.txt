@@ -7,3 +7,8 @@
 # tkhtmlview>=0.1.0   # Alternative HTML preview (optional)
 # markdown>=3.0.0     # For better markdown to HTML conversion (optional)
 # docker>=6.0.0       # For live testbed feature (optional)
+
+# Real-time collaboration dependencies (optional):
+# websockets>=12.0    # For WebSocket-based real-time collaboration
+# flask>=2.0.0        # For REST API server (already included if using API features)
+# flask-cors>=4.0.0   # For CORS support in API server (already included if using API features)
