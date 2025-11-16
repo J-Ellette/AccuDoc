@@ -1,0 +1,90 @@
+name: Multi-Repository Documentation Dashboard
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM
+  workflow_dispatch:
+    inputs:
+      repositories:
+        description: 'Comma-separated list of repos (owner/repo)'
+        required: false
+
+jobs:
+  generate-dashboard:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout Dashboard Repo
+        uses: actions/checkout@v3
+        with:
+          repository: your-org/docs-dashboard
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Clone AccuDoc
+        run: git clone --depth 1 https://github.com/J-Ellette/AccuDoc.git /tmp/accudoc
+      
+      - name: Checkout Target Repositories
+        run: |
+          mkdir -p repos
+          # Add your repositories here
+          REPOS="${{ github.event.inputs.repositories || 'your-org/repo1,your-org/repo2,your-org/repo3' }}"
+          IFS=',' read -ra REPO_ARRAY <<< "$REPOS"
+          for repo in "${REPO_ARRAY[@]}"; do
+            git clone --depth 1 "https://github.com/$repo" "repos/$(basename $repo)" || echo "Failed to clone $repo"
+          done
+      
+      - name: Generate Dashboard
+        run: |
+          python /tmp/accudoc/accudoc_cli.py dashboard \
+            --repos repos/* \
+            --output dashboard.md \
+            --format markdown
+          
+          python /tmp/accudoc/accudoc_cli.py dashboard \
+            --repos repos/* \
+            --output dashboard.html \
+            --format html
+      
+      - name: Generate Comparison Report
+        run: |
+          python /tmp/accudoc/accudoc_cli.py compare \
+            repos/* \
+            --output comparison.json \
+            --format json
+          
+          python /tmp/accudoc/accudoc_cli.py compare \
+            repos/* \
+            --output comparison.md \
+            --format text
+      
+      - name: Upload Dashboard Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: org-dashboard
+          path: |
+            dashboard.md
+            dashboard.html
+            comparison.json
+            comparison.md
+      
+      - name: Commit and Push Dashboard
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add dashboard.md dashboard.html comparison.*
+          git commit -m "Update dashboard - $(date +'%Y-%m-%d')" || echo "No changes"
+          git push
+      
+      - name: Create Summary
+        run: |
+          echo "## 📊 Organization Documentation Dashboard" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Generated: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          cat dashboard.md >> $GITHUB_STEP_SUMMARY

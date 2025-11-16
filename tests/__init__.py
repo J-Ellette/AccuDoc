@@ -1,0 +1,1 @@
+"""AccuDoc test suite."""

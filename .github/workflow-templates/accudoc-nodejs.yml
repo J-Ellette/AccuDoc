@@ -1,0 +1,71 @@
+name: Documentation for Node.js/TypeScript
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install Dependencies
+        run: npm ci || npm install
+      
+      - name: Generate Documentation
+        uses: J-Ellette/AccuDoc@v1
+        with:
+          output-file: 'docs/DOCUMENTATION.md'
+          template: 'default'
+          health-check: true
+          quality-check: true
+          coverage-threshold: 65
+          pr-comment: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Generate TypeScript API Docs
+        if: hashFiles('tsconfig.json') != ''
+        uses: J-Ellette/AccuDoc@v1
+        with:
+          output-file: 'docs/API.md'
+          template: 'api'
+          format: 'markdown'
+      
+      - name: Generate HTML Documentation Site
+        uses: J-Ellette/AccuDoc@v1
+        with:
+          output-file: 'docs/index.html'
+          format: 'html'
+          theme: 'corporate'
+      
+      - name: Check Package.json Documentation
+        run: |
+          if ! jq -e '.description' package.json > /dev/null; then
+            echo "⚠️ package.json missing description"
+          fi
+          if ! jq -e '.repository' package.json > /dev/null; then
+            echo "⚠️ package.json missing repository URL"
+          fi
+      
+      - name: Deploy Documentation
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          force_orphan: true

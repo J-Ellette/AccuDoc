@@ -56,6 +56,14 @@
                     <span class="icon">🔍</span>
                     <span class="label">Quality Tools</span>
                 </button>
+                <button class="nav-item" data-view="visual">
+                    <span class="icon">📊</span>
+                    <span class="label">Visual Docs</span>
+                </button>
+                <button class="nav-item" data-view="search">
+                    <span class="icon">🔎</span>
+                    <span class="label">Search</span>
+                </button>
                 <button class="nav-item" data-view="collaboration">
                     <span class="icon">👥</span>
                     <span class="label">Collaboration</span>
@@ -67,6 +75,10 @@
                 <button class="nav-item" data-view="terminal">
                     <span class="icon">⌨️</span>
                     <span class="label">Terminal</span>
+                </button>
+                <button class="nav-item" data-view="preview">
+                    <span class="icon">📄</span>
+                    <span class="label">Code Preview</span>
                 </button>
                 <button class="nav-item" data-view="settings">
                     <span class="icon">⚙️</span>
@@ -242,6 +254,162 @@
                 </div>
             </div>
 
+            <!-- Visual Documentation View -->
+            <div id="visual-view" class="content-view">
+                <div class="view-header">
+                    <h2>📊 Visual Documentation Tools</h2>
+                    <p>Generate diagrams and interactive visualizations</p>
+                </div>
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="visual-repo-path">Repository Path</label>
+                        <div class="input-group">
+                            <input type="text" id="visual-repo-path" placeholder="Enter repository path">
+                            <button id="visual-browse-btn" class="btn btn-secondary">Browse</button>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-container">
+                        <div class="tabs">
+                            <button class="tab active" data-tab="diagram">Generate Diagram</button>
+                            <button class="tab" data-tab="api-explorer">API Explorer</button>
+                            <button class="tab" data-tab="flowchart">Flowchart</button>
+                        </div>
+                        
+                        <!-- Diagram Generation Tab -->
+                        <div id="diagram-tab" class="tab-content active">
+                            <div class="form-group">
+                                <label for="visual-diagram-type">Diagram Type</label>
+                                <select id="visual-diagram-type">
+                                    <option value="architecture">Architecture Diagram</option>
+                                    <option value="class">Class Diagram</option>
+                                    <option value="sequence">Sequence Diagram</option>
+                                    <option value="flowchart">Flowchart</option>
+                                    <option value="er">Entity-Relationship</option>
+                                    <option value="state">State Diagram</option>
+                                    <option value="dependency">Dependency Graph</option>
+                                    <option value="component">Component Diagram</option>
+                                    <option value="deployment">Deployment Diagram</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="visual-theme">Theme</label>
+                                <select id="visual-theme">
+                                    <option value="default">Default</option>
+                                    <option value="dark">Dark</option>
+                                    <option value="forest">Forest</option>
+                                    <option value="neutral">Neutral</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="visual-direction">Direction</label>
+                                <select id="visual-direction">
+                                    <option value="TB">Top to Bottom</option>
+                                    <option value="LR">Left to Right</option>
+                                    <option value="RL">Right to Left</option>
+                                    <option value="BT">Bottom to Top</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="visual-format">Output Format</label>
+                                <select id="visual-format">
+                                    <option value="html">HTML (Interactive)</option>
+                                    <option value="markdown">Markdown</option>
+                                    <option value="mermaid">Mermaid Code</option>
+                                </select>
+                            </div>
+                            <button id="visual-generate-diagram-btn" class="btn btn-primary btn-large">Generate Diagram</button>
+                        </div>
+                        
+                        <!-- API Explorer Tab -->
+                        <div id="api-explorer-tab" class="tab-content">
+                            <div class="form-group">
+                                <label for="visual-api-spec">API Specification (JSON)</label>
+                                <textarea id="visual-api-spec" rows="6" placeholder="Paste API spec JSON or leave empty to analyze repository"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="visual-api-title">Documentation Title</label>
+                                <input type="text" id="visual-api-title" placeholder="My API Documentation" value="API Documentation">
+                            </div>
+                            <button id="visual-generate-api-btn" class="btn btn-primary btn-large">Generate API Explorer</button>
+                        </div>
+                        
+                        <!-- Flowchart Tab -->
+                        <div id="flowchart-tab" class="tab-content">
+                            <div class="form-group">
+                                <label for="visual-function-name">Function Name</label>
+                                <input type="text" id="visual-function-name" placeholder="e.g., process_data">
+                            </div>
+                            <div class="form-group">
+                                <label for="visual-max-depth">Max Depth</label>
+                                <input type="number" id="visual-max-depth" value="3" min="1" max="10">
+                            </div>
+                            <button id="visual-generate-flowchart-btn" class="btn btn-primary btn-large">Generate Flowchart</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="output-section">
+                    <div class="output-header">
+                        <h3>Visualization Preview</h3>
+                        <div class="output-actions">
+                            <button id="visual-save-btn" class="btn btn-secondary">💾 Save</button>
+                            <button id="visual-copy-btn" class="btn btn-secondary">📋 Copy</button>
+                            <button id="visual-export-btn" class="btn btn-secondary">📤 Export</button>
+                        </div>
+                    </div>
+                    <div id="visual-output" class="output-box visual-output"></div>
+                </div>
+            </div>
+
+            <!-- Search View -->
+            <div id="search-view" class="content-view">
+                <div class="view-header">
+                    <h2>Smart Search</h2>
+                    <p>Search source files and docs with fuzzy matching</p>
+                </div>
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="search-repo-path">Repository Path</label>
+                        <div class="input-group">
+                            <input type="text" id="search-repo-path" placeholder="Enter repository path">
+                            <button id="search-browse-repo" class="btn btn-secondary">Browse</button>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="search-query">Query</label>
+                            <input type="text" id="search-query" placeholder="Enter keywords">
+                        </div>
+                        <div class="form-group">
+                            <label for="search-types">File Types</label>
+                            <input type="text" id="search-types" placeholder="e.g. md,py,txt (optional)">
+                        </div>
+                        <div class="form-group">
+                            <label for="search-mode">Mode</label>
+                            <select id="search-mode">
+                                <option value="fuzzy" selected>Fuzzy</option>
+                                <option value="exact">Exact</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="search-limit">Limit</label>
+                            <input type="number" id="search-limit" value="50" min="1" max="500">
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button id="search-run" class="btn btn-primary">Search</button>
+                        <button id="search-clear" class="btn">Clear</button>
+                        <button id="search-copy" class="btn btn-secondary">📋 Copy</button>
+                        <button id="search-export-json" class="btn btn-secondary">📤 Export JSON</button>
+                    </div>
+                </div>
+                <div class="output-section">
+                    <h3>Results</h3>
+                    <div id="search-results" class="output-box"></div>
+                </div>
+            </div>
+
             <!-- Health Dashboard View -->
             <div id="health-view" class="content-view">
                 <div class="view-header">
@@ -263,36 +431,150 @@
             <!-- Export View -->
             <div id="export-view" class="content-view">
                 <div class="view-header">
-                    <h2>Export Data</h2>
+                    <h2>📤 Enhanced Export</h2>
+                    <p>Export with preview, batch processing, and custom templates</p>
                 </div>
-                <div class="form-section">
-                    <div class="form-group">
-                        <label for="export-repo-path">Repository Path</label>
-                        <div class="input-group">
-                            <input type="text" id="export-repo-path" placeholder="Enter repository path">
-                            <button id="export-browse-btn" class="btn btn-secondary">Browse</button>
+                
+                <div class="tab-container">
+                    <div class="tabs">
+                        <button class="tab active" data-tab="single-export">Single Export</button>
+                        <button class="tab" data-tab="batch-export">Batch Export</button>
+                        <button class="tab" data-tab="templates">Templates</button>
+                    </div>
+                    
+                    <!-- Single Export Tab -->
+                    <div id="single-export-tab" class="tab-content active">
+                        <div class="form-section">
+                            <div class="form-group">
+                                <label for="export-repo-path">Repository Path</label>
+                                <div class="input-group">
+                                    <input type="text" id="export-repo-path" placeholder="Enter repository path or drag & drop">
+                                    <button id="export-browse-btn" class="btn btn-secondary">Browse</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="export-format">Export Format</label>
+                                <select id="export-format">
+                                    <option value="markdown">Markdown</option>
+                                    <option value="html">HTML</option>
+                                    <option value="pdf">PDF</option>
+                                    <option value="csv">CSV Reports</option>
+                                    <option value="json">JSON Data</option>
+                                    <option value="website">Static Website</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="export-template">Documentation Template</label>
+                                <select id="export-template">
+                                    <option value="default">Default</option>
+                                    <option value="minimal">Minimal</option>
+                                    <option value="detailed">Detailed</option>
+                                    <option value="api">API Reference</option>
+                                    <option value="readme">README Style</option>
+                                    <option value="student">Student Project</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="export-output-dir">Output Directory</label>
+                                <div class="input-group">
+                                    <input type="text" id="export-output-dir" placeholder="Where to save exports">
+                                    <button id="export-output-browse-btn" class="btn btn-secondary">Browse</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="export-preview-enabled" checked>
+                                    Generate preview before export
+                                </label>
+                            </div>
+                            <div class="button-group">
+                                <button id="export-preview-btn" class="btn btn-secondary">👁️ Preview</button>
+                                <button id="export-start-btn" class="btn btn-primary">📤 Export</button>
+                            </div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="export-format">Export Format</label>
-                        <select id="export-format">
-                            <option value="csv">CSV Reports</option>
-                            <option value="json">JSON Data</option>
-                            <option value="summary">Summary CSV</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="export-output">Output Directory</label>
-                        <div class="input-group">
-                            <input type="text" id="export-output" placeholder="Where to save exports">
-                            <button id="export-output-browse-btn" class="btn btn-secondary">Browse</button>
+                    
+                    <!-- Batch Export Tab -->
+                    <div id="batch-export-tab" class="tab-content">
+                        <div class="form-section">
+                            <div class="form-group">
+                                <label for="batch-export-list">Repositories (one per line or JSON array)</label>
+                                <textarea id="batch-export-list" rows="6" placeholder="Enter repository paths or drag & drop multiple folders&#10;&#10;Or JSON format:&#10;[&#10;  {&quot;path&quot;: &quot;/path/to/repo1&quot;, &quot;format&quot;: &quot;html&quot;},&#10;  {&quot;path&quot;: &quot;/path/to/repo2&quot;, &quot;format&quot;: &quot;pdf&quot;}&#10;]"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="batch-export-format">Default Export Format</label>
+                                <select id="batch-export-format">
+                                    <option value="markdown">Markdown</option>
+                                    <option value="html">HTML</option>
+                                    <option value="pdf">PDF</option>
+                                    <option value="json">JSON</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="batch-export-output">Output Directory</label>
+                                <div class="input-group">
+                                    <input type="text" id="batch-export-output" placeholder="Base output directory">
+                                    <button id="batch-export-browse-btn" class="btn btn-secondary">Browse</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="batch-workers">Parallel Workers</label>
+                                <input type="number" id="batch-workers" value="4" min="1" max="16">
+                            </div>
+                            <button id="batch-export-start-btn" class="btn btn-primary btn-large">📦 Batch Export</button>
                         </div>
                     </div>
-                    <button id="export-start-btn" class="btn btn-primary btn-large">Export Data</button>
+                    
+                    <!-- Templates Tab -->
+                    <div id="templates-tab" class="tab-content">
+                        <div class="form-section">
+                            <h3>📝 Custom Export Templates</h3>
+                            <p>Create and manage custom documentation templates</p>
+                            <div class="template-list">
+                                <div class="template-card">
+                                    <h4>Default Template</h4>
+                                    <p>Complete documentation with all sections</p>
+                                    <button class="btn btn-secondary btn-small" data-template="default">Edit</button>
+                                </div>
+                                <div class="template-card">
+                                    <h4>Minimal Template</h4>
+                                    <p>Essential information only</p>
+                                    <button class="btn btn-secondary btn-small" data-template="minimal">Edit</button>
+                                </div>
+                                <div class="template-card">
+                                    <h4>API Template</h4>
+                                    <p>Focus on API documentation</p>
+                                    <button class="btn btn-secondary btn-small" data-template="api">Edit</button>
+                                </div>
+                            </div>
+                            <div class="template-editor">
+                                <div class="form-group">
+                                    <label for="template-name">Template Name</label>
+                                    <input type="text" id="template-name" placeholder="my-template">
+                                </div>
+                                <div class="form-group">
+                                    <label for="template-editor">Template JSON</label>
+                                    <textarea id="template-editor" rows="12" placeholder="{\n  \"sections\": [\n    \"overview\", \n    \"features\", \n    \"installation\"\n  ]\n}"></textarea>
+                                </div>
+                                <div class="button-group">
+                                    <button id="create-template-btn" class="btn btn-secondary">➕ New</button>
+                                    <button id="save-template-btn" class="btn btn-primary">💾 Save Template</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+                
                 <div class="output-section">
-                    <h3>Export Results</h3>
-                    <div id="export-output" class="output-box"></div>
+                    <div class="output-header">
+                        <h3>Preview / Results</h3>
+                        <div class="output-actions">
+                            <label class="sbs-toggle"><input type="checkbox" id="export-sbs-toggle"> Side-by-Side</label>
+                            <button id="export-copy-preview-btn" class="btn btn-secondary">📋 Copy</button>
+                            <button id="export-open-folder-btn" class="btn btn-secondary">📁 Open Folder</button>
+                        </div>
+                    </div>
+                    <div id="export-preview-box" class="output-box export-preview"></div>
                 </div>
             </div>
 
@@ -992,6 +1274,33 @@
                     </div>
                 </div>
                 <button id="settings-save-btn" class="btn btn-primary">Save Settings</button>
+            </div>
+
+            <!-- Preview View -->
+            <div id="preview-view" class="content-view">
+                <div class="view-header">
+                    <h2>Code Preview</h2>
+                    <p>Open any file with syntax highlighting</p>
+                </div>
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="preview-file-path">File Path</label>
+                        <div class="input-group">
+                            <input type="text" id="preview-file-path" placeholder="Enter file path or drag & drop">
+                            <button id="preview-browse-btn" class="btn btn-secondary">Browse</button>
+                            <button id="preview-open-btn" class="btn btn-primary">Open</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="output-section">
+                    <div class="output-header">
+                        <h3>Preview</h3>
+                        <div class="output-actions">
+                            <button id="preview-copy-btn" class="btn btn-secondary">📋 Copy</button>
+                        </div>
+                    </div>
+                    <div id="code-preview" class="output-box code-preview"><pre><code></code></pre></div>
+                </div>
             </div>
         </main>
     </div>

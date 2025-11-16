@@ -354,6 +354,57 @@ ipcMain.handle('get-app-path', async (event, name) => {
   return app.getPath(name);
 });
 
+// Validate path for drag-drop
+ipcMain.handle('validate-path', async (event, filePath) => {
+  try {
+    const stats = await fs.stat(filePath);
+    return {
+      isDirectory: stats.isDirectory(),
+      isFile: stats.isFile(),
+      exists: true
+    };
+  } catch (error) {
+    return {
+      isDirectory: false,
+      isFile: false,
+      exists: false
+    };
+  }
+});
+
+// Save temporary file
+ipcMain.handle('save-temp-file', async (event, options) => {
+  try {
+    const tempDir = os.tmpdir();
+    const timestamp = Date.now();
+    const tempPath = path.join(tempDir, `accudoc_temp_${timestamp}${options.extension || '.tmp'}`);
+    await fs.writeFile(tempPath, options.content, 'utf-8');
+    return tempPath;
+  } catch (error) {
+    throw new Error(`Failed to save temp file: ${error.message}`);
+  }
+});
+
+// Save file dialog
+ipcMain.handle('save-file-dialog', async (event, options) => {
+  const result = await dialog.showSaveDialog({
+    defaultPath: options.defaultPath || 'file',
+    filters: options.filters || [{ name: 'All Files', extensions: ['*'] }]
+  });
+  return result.canceled ? null : result.filePath;
+});
+
+// Open folder in file explorer
+ipcMain.handle('open-folder', async (event, folderPath) => {
+  const { shell } = require('electron');
+  try {
+    await shell.openPath(folderPath);
+    return true;
+  } catch (error) {
+    throw new Error(`Failed to open folder: ${error.message}`);
+  }
+});
+
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);

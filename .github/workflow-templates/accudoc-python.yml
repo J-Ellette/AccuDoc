@@ -1,0 +1,73 @@
+name: Documentation for Python Library
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  release:
+    types: [ published ]
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install Project Dependencies
+        run: |
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f setup.py ]; then pip install -e .; fi
+      
+      - name: Generate API Documentation
+        id: api-docs
+        uses: J-Ellette/AccuDoc@v1
+        with:
+          output-file: 'docs/API.md'
+          template: 'api'
+          quality-check: true
+          fail-on-warnings: false
+      
+      - name: Generate Complete Documentation
+        uses: J-Ellette/AccuDoc@v1
+        with:
+          output-file: 'docs/README.md'
+          template: 'detailed'
+          health-check: true
+          coverage-threshold: 70
+          pr-comment: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Run Quality Analysis
+        id: quality
+        run: |
+          pip install -e /tmp/accudoc
+          python /tmp/accudoc/accudoc_cli.py quality-analyze . --json > quality-report.json
+          echo "Quality Score: $(jq -r '.overall_score' quality-report.json)"
+      
+      - name: Check Documentation Standards
+        run: |
+          # Ensure docstrings for all public functions
+          python /tmp/accudoc/accudoc_cli.py completeness . --threshold 80
+      
+      - name: Upload Documentation
+        uses: actions/upload-artifact@v3
+        with:
+          name: python-docs
+          path: |
+            docs/
+            quality-report.json
+      
+      - name: Publish to Read the Docs (if configured)
+        if: github.event_name == 'release'
+        run: echo "Trigger RTD webhook here"

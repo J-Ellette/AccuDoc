@@ -1,0 +1,99 @@
+<idea-plugin>
+    <id>com.accudoc.jetbrains</id>
+    <name>AccuDoc</name>
+    <version>1.0.0</version>
+    <vendor email="support@accudoc.dev" url="https://github.com/J-Ellette/AccuDoc">AccuDoc</vendor>
+
+    <description><![CDATA[
+    <p>Automated Repository Documentation Generator for JetBrains IDEs</p>
+    <p>Generate comprehensive documentation directly from your IDE:</p>
+    <ul>
+        <li>Scan repository and extract metadata</li>
+        <li>Generate README with API docs, code statistics, architecture diagrams</li>
+        <li>Smart search across source files and documentation</li>
+        <li>Documentation quality analysis with improvement suggestions</li>
+        <li>Support for Markdown, HTML, and Text output formats</li>
+    </ul>
+    ]]></description>
+
+    <change-notes><![CDATA[
+    <h3>Version 1.0.0</h3>
+    <ul>
+        <li>Initial release</li>
+        <li>Repository scanning</li>
+        <li>Documentation generation</li>
+        <li>Smart search functionality</li>
+        <li>Quality analysis</li>
+    </ul>
+    ]]></change-notes>
+
+    <!-- Compatible with IntelliJ Platform 2021.1+ -->
+    <idea-version since-build="211"/>
+
+    <!-- Plugin dependencies -->
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Tool window -->
+        <toolWindow id="AccuDoc" secondary="true" icon="/icons/accudoc.svg" 
+                    anchor="right" factoryClass="com.accudoc.jetbrains.AccuDocToolWindowFactory"/>
+        
+        <!-- Settings -->
+        <applicationConfigurable instance="com.accudoc.jetbrains.AccuDocSettings" 
+                                id="com.accudoc.settings"
+                                displayName="AccuDoc"/>
+        
+        <!-- File type -->
+        <fileType name="AccuDoc Output" 
+                 implementationClass="com.accudoc.jetbrains.AccuDocFileType"
+                 fieldName="INSTANCE" 
+                 language="TEXT" 
+                 extensions="accudoc"/>
+    </extensions>
+
+    <actions>
+        <group id="AccuDoc.Menu" text="AccuDoc" description="AccuDoc documentation tools">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            
+            <action id="AccuDoc.Scan" 
+                    class="com.accudoc.jetbrains.actions.ScanRepositoryAction" 
+                    text="Scan Repository"
+                    description="Scan repository for documentation metadata"
+                    icon="/icons/scan.svg"/>
+            
+            <action id="AccuDoc.Generate" 
+                    class="com.accudoc.jetbrains.actions.GenerateDocumentationAction" 
+                    text="Generate Documentation"
+                    description="Generate comprehensive documentation"
+                    icon="/icons/generate.svg"/>
+            
+            <action id="AccuDoc.Search" 
+                    class="com.accudoc.jetbrains.actions.SmartSearchAction" 
+                    text="Smart Search"
+                    description="Search across source and documentation"
+                    icon="/icons/search.svg"/>
+            
+            <action id="AccuDoc.Quality" 
+                    class="com.accudoc.jetbrains.actions.QualityAnalysisAction" 
+                    text="Analyze Quality"
+                    description="Analyze documentation quality"
+                    icon="/icons/quality.svg"/>
+        </group>
+
+        <!-- Context menu actions -->
+        <group id="AccuDoc.ContextMenu">
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+            <separator/>
+            <reference id="AccuDoc.Scan"/>
+            <reference id="AccuDoc.Generate"/>
+        </group>
+
+        <!-- Editor popup actions -->
+        <group id="AccuDoc.EditorPopup">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <separator/>
+            <reference id="AccuDoc.Search"/>
+        </group>
+    </actions>
+</idea-plugin>

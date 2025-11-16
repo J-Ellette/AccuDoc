@@ -1,0 +1,71 @@
+name: Documentation for React/Vue/Angular
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: Generate Documentation
+        id: docs
+        uses: J-Ellette/AccuDoc@v1
+        with:
+          output-file: 'docs/DOCUMENTATION.md'
+          template: 'default'
+          health-check: true
+          coverage-threshold: 60
+          pr-comment: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Generate HTML Preview
+        uses: J-Ellette/AccuDoc@v1
+        with:
+          output-file: 'docs/index.html'
+          format: 'html'
+          theme: 'minimal'
+      
+      - name: Upload Documentation Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: documentation
+          path: docs/
+          retention-days: 30
+      
+      - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          cname: docs.example.com  # Optional: your custom domain
+      
+      - name: Comment PR with Results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const health = '${{ steps.docs.outputs.health-score }}';
+            const coverage = '${{ steps.docs.outputs.coverage-score }}';
+            const emoji = coverage >= 70 ? '✅' : coverage >= 50 ? '⚠️' : '❌';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ${emoji} Documentation Report\n\n- **Health**: ${health}/100\n- **Coverage**: ${coverage}%\n\n[View Documentation](https://github.com/${{github.repository}}/blob/${{github.head_ref}}/docs/DOCUMENTATION.md)`
+            });

@@ -1,0 +1,194 @@
+{
+  "name": "accudoc",
+  "displayName": "AccuDoc",
+  "description": "Automated Repository Documentation Generator - Generate comprehensive documentation directly from VS Code",
+  "version": "1.0.0",
+  "publisher": "accudoc",
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Documentation",
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "documentation",
+    "generator",
+    "markdown",
+    "api",
+    "readme"
+  ],
+  "activationEvents": [
+    "onCommand:accudoc.scan",
+    "onCommand:accudoc.generate",
+    "onCommand:accudoc.export",
+    "onCommand:accudoc.search",
+    "onCommand:accudoc.quality",
+    "onView:accudocExplorer"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "accudoc.scan",
+        "title": "AccuDoc: Scan Repository",
+        "icon": "$(file-code)"
+      },
+      {
+        "command": "accudoc.generate",
+        "title": "AccuDoc: Generate Documentation",
+        "icon": "$(file-text)"
+      },
+      {
+        "command": "accudoc.export",
+        "title": "AccuDoc: Export Documentation",
+        "icon": "$(export)"
+      },
+      {
+        "command": "accudoc.search",
+        "title": "AccuDoc: Smart Search",
+        "icon": "$(search)"
+      },
+      {
+        "command": "accudoc.quality",
+        "title": "AccuDoc: Analyze Quality",
+        "icon": "$(checklist)"
+      },
+      {
+        "command": "accudoc.openSettings",
+        "title": "AccuDoc: Open Settings",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "accudoc.refreshExplorer",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "accudoc",
+          "title": "AccuDoc",
+          "icon": "$(book)"
+        }
+      ]
+    },
+    "views": {
+      "accudoc": [
+        {
+          "id": "accudocExplorer",
+          "name": "Documentation Explorer"
+        },
+        {
+          "id": "accudocQuality",
+          "name": "Quality Metrics"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "accudoc.refreshExplorer",
+          "when": "view == accudocExplorer",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "accudoc.generate",
+          "when": "view == accudocExplorer"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "accudoc.scan",
+          "group": "accudoc@1"
+        },
+        {
+          "command": "accudoc.export",
+          "group": "accudoc@2"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "accudoc.scan"
+        },
+        {
+          "command": "accudoc.generate"
+        },
+        {
+          "command": "accudoc.export"
+        },
+        {
+          "command": "accudoc.search"
+        },
+        {
+          "command": "accudoc.quality"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "AccuDoc",
+      "properties": {
+        "accudoc.pythonPath": {
+          "type": "string",
+          "default": "python",
+          "description": "Path to Python executable with AccuDoc installed"
+        },
+        "accudoc.cliPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to accudoc_cli.py (leave empty to use installed package)"
+        },
+        "accudoc.autoScan": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically scan repository on startup"
+        },
+        "accudoc.outputFormat": {
+          "type": "string",
+          "default": "markdown",
+          "enum": ["markdown", "html", "text"],
+          "description": "Default output format for documentation"
+        },
+        "accudoc.theme": {
+          "type": "string",
+          "default": "default",
+          "enum": ["default", "dark"],
+          "description": "Theme for HTML output"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/glob": "^8.0.0",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "16.x",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
+    "eslint": "^8.28.0",
+    "glob": "^8.0.3",
+    "mocha": "^10.1.0",
+    "typescript": "^4.9.3",
+    "@vscode/test-electron": "^2.2.0",
+    "vsce": "^2.15.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/J-Ellette/AccuDoc.git"
+  },
+  "license": "MIT"
+}

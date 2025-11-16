@@ -20,7 +20,8 @@ from accudoc.github_api import GitHubAPIClient, scan_github_repository
 from accudoc.gitlab_api import GitLabAPIClient, scan_gitlab_repository
 from accudoc.bitbucket_api import BitbucketAPIClient, scan_bitbucket_repository
 from accudoc.plugins import get_plugin_manager
-from quality_scoring import QualityAnalyzer
+from accudoc.quality_scoring import QualityAnalyzer
+from accudoc.visual_docs import VisualDocumentationSystem, DiagramConfig
 
 
 class AccuDocCLI:
@@ -1692,38 +1693,38 @@ class AccuDocCLI:
     
     def start_collab_server_command(self, args):
         """Execute start collaboration server command."""
-        from collaboration_cli import start_collaboration_server
+        from accudoc.collaboration_cli import start_collaboration_server
         
         self.logger.info("Starting collaboration server")
         return start_collaboration_server(args)
     
     def collab_status_command(self, args):
         """Execute collaboration status command."""
-        from collaboration_cli import collaboration_status
+        from accudoc.collaboration_cli import collaboration_status
         
         return collaboration_status(args)
     
     def stop_collab_server_command(self, args):
         """Execute stop collaboration server command."""
-        from collaboration_cli import stop_collaboration_server
+        from accudoc.collaboration_cli import stop_collaboration_server
         
         return stop_collaboration_server(args)
     
     def manage_sessions_command(self, args):
         """Execute manage sessions command."""
-        from collaboration_cli import manage_sessions
+        from accudoc.collaboration_cli import manage_sessions
         
         return manage_sessions(args)
     
     def manage_comments_command(self, args):
         """Execute manage comments command."""
-        from collaboration_cli import manage_comments
+        from accudoc.collaboration_cli import manage_comments
         
         return manage_comments(args)
     
     def manage_reviews_command(self, args):
         """Execute manage reviews command."""
-        from collaboration_cli import manage_reviews
+        from accudoc.collaboration_cli import manage_reviews
         
         return manage_reviews(args)
     
@@ -2794,6 +2795,84 @@ Examples:
         # Batch command
         batch_parser = subparsers.add_parser('batch', help='Process multiple repositories')
         batch_parser.add_argument('batch_file', help='JSON file with batch configuration')
+
+        # Search command (smart search)
+        search_parser = subparsers.add_parser('search', help='Search repository files and docs')
+        search_parser.add_argument('repository', help='Repository path')
+        search_parser.add_argument('--query', required=True, help='Search query string')
+        search_parser.add_argument('--types', help='Comma-separated file extensions to include (e.g. md,py,txt)')
+        search_parser.add_argument('--mode', choices=['fuzzy', 'exact'], default='fuzzy', help='Search mode (default: fuzzy)')
+        search_parser.add_argument('--limit', type=int, default=50, help='Maximum results (default: 50)')
+        search_parser.add_argument('--context-lines', type=int, default=2, help='Context lines around match (default: 2)')
+        search_parser.add_argument('--json', action='store_true', help='Output results as JSON')
+        
+        # Git hooks command
+        hooks_parser = subparsers.add_parser('hooks', help='Manage git hooks for automatic doc updates')
+        hooks_subparsers = hooks_parser.add_subparsers(dest='hooks_command', help='Hooks commands')
+        
+        # Install hooks
+        hooks_install = hooks_subparsers.add_parser('install', help='Install git hooks')
+        hooks_install.add_argument('repository', nargs='?', default='.', help='Repository path (default: current directory)')
+        hooks_install.add_argument('--pre-commit', action='store_true', help='Install pre-commit hook only')
+        hooks_install.add_argument('--post-commit', action='store_true', help='Install post-commit hook only')
+        hooks_install.add_argument('--pre-push', action='store_true', help='Install pre-push hook only')
+        
+        # Uninstall hooks
+        hooks_uninstall = hooks_subparsers.add_parser('uninstall', help='Uninstall git hooks')
+        hooks_uninstall.add_argument('repository', nargs='?', default='.', help='Repository path (default: current directory)')
+        hooks_uninstall.add_argument('--pre-commit', action='store_true', help='Uninstall pre-commit hook only')
+        hooks_uninstall.add_argument('--post-commit', action='store_true', help='Uninstall post-commit hook only')
+        hooks_uninstall.add_argument('--pre-push', action='store_true', help='Uninstall pre-push hook only')
+        
+        # List hooks
+        hooks_list = hooks_subparsers.add_parser('list', help='List installed hooks')
+        hooks_list.add_argument('repository', nargs='?', default='.', help='Repository path (default: current directory)')
+        
+        # Analytics command
+        analytics_parser = subparsers.add_parser('analytics', help='Documentation analytics and insights')
+        analytics_subparsers = analytics_parser.add_subparsers(dest='analytics_command', help='Analytics commands')
+        
+        # Track page view
+        track_view = analytics_subparsers.add_parser('track-view', help='Track documentation page view')
+        track_view.add_argument('page', help='Page path')
+        track_view.add_argument('--user', help='User ID')
+        track_view.add_argument('--session', help='Session ID')
+        track_view.add_argument('--duration', type=int, help='Duration in seconds')
+        track_view.add_argument('--db', default='accudoc_analytics.db', help='Analytics database path')
+        
+        # Track search
+        track_search = analytics_subparsers.add_parser('track-search', help='Track search query')
+        track_search.add_argument('query', help='Search query')
+        track_search.add_argument('--results', type=int, required=True, help='Number of results')
+        track_search.add_argument('--user', help='User ID')
+        track_search.add_argument('--clicked', help='Clicked result path')
+        track_search.add_argument('--db', default='accudoc_analytics.db', help='Analytics database path')
+        
+        # Analytics report
+        report_analytics = analytics_subparsers.add_parser('report', help='Generate analytics report')
+        report_analytics.add_argument('--days', type=int, default=30, help='Number of days to analyze (default: 30)')
+        report_analytics.add_argument('-o', '--output', help='Output file (optional)')
+        report_analytics.add_argument('-f', '--format', choices=['text', 'json'], default='text', help='Output format')
+        report_analytics.add_argument('--db', default='accudoc_analytics.db', help='Analytics database path')
+        
+        # Team productivity
+        team_metrics = analytics_subparsers.add_parser('team', help='Team productivity metrics')
+        team_metrics.add_argument('--days', type=int, default=30, help='Number of days to analyze')
+        team_metrics.add_argument('-o', '--output', help='Output file')
+        team_metrics.add_argument('--db', default='accudoc_analytics.db', help='Analytics database path')
+        
+        # Aging analysis
+        aging_analysis = analytics_subparsers.add_parser('aging', help='Documentation aging analysis')
+        aging_analysis.add_argument('--stale-days', type=int, default=90, help='Days after which doc is stale')
+        aging_analysis.add_argument('-o', '--output', help='Output file')
+        aging_analysis.add_argument('--db', default='accudoc_analytics.db', help='Analytics database path')
+        
+        # ROI metrics
+        roi_metrics = analytics_subparsers.add_parser('roi', help='Calculate documentation ROI')
+        roi_metrics.add_argument('--team-size', type=int, required=True, help='Team size')
+        roi_metrics.add_argument('--hourly-rate', type=float, required=True, help='Average hourly rate')
+        roi_metrics.add_argument('--days', type=int, default=30, help='Analysis period')
+        roi_metrics.add_argument('--db', default='accudoc_analytics.db', help='Analytics database path')
         
         # Branch comparison command
         branch_parser = subparsers.add_parser('branch-compare', 
@@ -3220,22 +3299,6 @@ Examples:
         access_grant.add_argument('--granted-by', required=True,
                                  help='User ID granting access')
         
-        # Hooks command
-        hooks_parser = subparsers.add_parser('hooks',
-                                             help='Manage hooks system')
-        hooks_parser.add_argument('--list', action='store_true',
-                                 help='List all registered hooks')
-        hooks_parser.add_argument('--all', action='store_true',
-                                 help='Show all hook points (including empty ones)')
-        hooks_parser.add_argument('--enable', action='store_true',
-                                 help='Enable a hook')
-        hooks_parser.add_argument('--disable', action='store_true',
-                                 help='Disable a hook')
-        hooks_parser.add_argument('hook_point', nargs='?',
-                                 help='Hook point (e.g., before_scan)')
-        hooks_parser.add_argument('hook_name', nargs='?',
-                                 help='Hook name to enable/disable')
-        
         # Archive management
         archive_parser = subparsers.add_parser('archive',
                                               help='Manage immutable documentation archives')
@@ -3487,6 +3550,52 @@ Examples:
         quality_report_parser.add_argument('-o', '--output',
                                          help='Output file path')
         
+        # Visual Documentation commands
+        visual_diagram_parser = subparsers.add_parser('visual-diagram',
+                                                     help='Generate visual diagrams from code')
+        visual_diagram_parser.add_argument('repository', help='Repository path')
+        visual_diagram_parser.add_argument('-t', '--type',
+                                         choices=['architecture', 'class', 'sequence', 'flowchart',
+                                                 'er', 'state', 'dependency', 'component', 'deployment'],
+                                         required=True,
+                                         help='Diagram type')
+        visual_diagram_parser.add_argument('--theme', choices=['default', 'dark', 'forest', 'neutral'],
+                                         default='default',
+                                         help='Diagram theme (default: default)')
+        visual_diagram_parser.add_argument('--direction', choices=['TB', 'LR', 'RL', 'BT'],
+                                         default='TB',
+                                         help='Diagram direction (default: TB - top to bottom)')
+        visual_diagram_parser.add_argument('--format', choices=['html', 'md', 'txt'],
+                                         default='html',
+                                         help='Output format (default: html)')
+        visual_diagram_parser.add_argument('-o', '--output',
+                                         help='Output file path')
+        
+        visual_api_parser = subparsers.add_parser('visual-api-explorer',
+                                                  help='Generate interactive API explorer')
+        visual_api_parser.add_argument('api_spec', help='API specification file (JSON)')
+        visual_api_parser.add_argument('-o', '--output',
+                                      help='Output HTML file path')
+        
+        visual_analyze_parser = subparsers.add_parser('visual-analyze',
+                                                      help='Analyze code for diagram generation')
+        visual_analyze_parser.add_argument('repository', help='Repository path')
+        visual_analyze_parser.add_argument('-o', '--output',
+                                         help='Output JSON file path')
+        visual_analyze_parser.add_argument('--format', choices=['json', 'summary'],
+                                         default='summary',
+                                         help='Output format (default: summary)')
+        
+        visual_flowchart_parser = subparsers.add_parser('visual-flowchart',
+                                                        help='Generate flowchart from Python function')
+        visual_flowchart_parser.add_argument('file', help='Python file containing function')
+        visual_flowchart_parser.add_argument('function', help='Function name')
+        visual_flowchart_parser.add_argument('--format', choices=['html', 'md', 'txt'],
+                                           default='html',
+                                           help='Output format (default: html)')
+        visual_flowchart_parser.add_argument('-o', '--output',
+                                           help='Output file path')
+        
         # Parse arguments
         args = parser.parse_args()
         
@@ -3505,6 +3614,7 @@ Examples:
             'site': self.site_command,
             'info': self.info_command,
             'cache': self.cache_command,
+            'search': self.search_command,
             'onboarding': self.onboarding_command,
             'check-links': self.check_links_command,
             'plugins': self.plugins_command,
@@ -3538,6 +3648,7 @@ Examples:
             'manage-comments': self.manage_comments_command,
             'manage-reviews': self.manage_reviews_command,
             'hooks': self.hooks_command,
+            'analytics': self.analytics_command,
             'collaborate': self.collaborate_command,
             'user': self.user_command,
             'archive': self.archive_command,
@@ -3545,6 +3656,10 @@ Examples:
             'quality-history': self.quality_history_command,
             'quality-benchmark': self.quality_benchmark_command,
             'quality-report': self.quality_report_command,
+            'visual-diagram': self.visual_diagram_command,
+            'visual-api-explorer': self.visual_api_explorer_command,
+            'visual-analyze': self.visual_analyze_command,
+            'visual-flowchart': self.visual_flowchart_command,
             'compliance': self.compliance_command,
         }
         
@@ -3553,6 +3668,325 @@ Examples:
             return handler(args)
         else:
             parser.print_help()
+            return 1
+
+    def search_command(self, args):
+        """Execute smart search command."""
+        from accudoc.smart_search import search_repository
+        try:
+            include_exts = None
+            if args.types:
+                include_exts = [ext.strip().lower() for ext in args.types.split(',') if ext.strip()]
+
+            results = search_repository(
+                args.repository,
+                args.query,
+                mode=args.mode,
+                limit=args.limit,
+                context_lines=args.context_lines,
+                include_exts=include_exts,
+            )
+
+            if args.json:
+                import json as _json
+                print(_json.dumps([
+                    {
+                        'path': r.path,
+                        'line': r.line_number,
+                        'score': round(r.score, 3),
+                        'line_content': r.line_content,
+                        'context_before': r.context_before,
+                        'context_after': r.context_after,
+                    } for r in results
+                ], indent=2))
+            else:
+                if not results:
+                    print("No results found.")
+                    return 0
+
+                print(f"Found {len(results)} result(s)\n" + "="*60)
+                for r in results:
+                    print(f"\n{r.path}:{r.line_number} (score: {r.score:.2f})")
+                    for i, line in enumerate(r.context_before):
+                        print(f"  {r.line_number - len(r.context_before) + i}: {line}")
+                    print(f"➤ {r.line_number}: {r.line_content}")
+                    for i, line in enumerate(r.context_after):
+                        print(f"  {r.line_number + i + 1}: {line}")
+
+            return 0
+        except Exception as e:
+            print(f"✗ Error during search: {e}", file=sys.stderr)
+            return 1
+    
+    def hooks_command(self, args):
+        """Execute git hooks management command."""
+        from accudoc.git_hooks import GitHooks
+        
+        try:
+            if not args.hooks_command:
+                print("Error: No hooks sub-command specified. Use install, uninstall, or list.")
+                return 1
+            
+            manager = GitHooks(args.repository)
+            
+            if args.hooks_command == 'install':
+                # Determine which hooks to install
+                hook_types = []
+                if args.pre_commit:
+                    hook_types.append('pre-commit')
+                if args.post_commit:
+                    hook_types.append('post-commit')
+                if args.pre_push:
+                    hook_types.append('pre-push')
+                
+                # If no specific hooks requested, install all
+                if not hook_types:
+                    hook_types = None  # Will install all hooks
+                
+                print("🔧 Installing AccuDoc git hooks...")
+                results = manager.install_hooks(hook_types)
+                
+                success_count = 0
+                for hook_type, result in results.items():
+                    if result.get('success'):
+                        print(f"✅ {hook_type}: {result.get('description')}")
+                        if 'backup' in result:
+                            print(f"   Backed up existing hook to: {result['backup']}")
+                        success_count += 1
+                    else:
+                        print(f"❌ {hook_type}: {result.get('error', 'Failed')}")
+                
+                print(f"\n✓ Installed {success_count}/{len(results)} hooks successfully")
+                return 0 if success_count > 0 else 1
+            
+            elif args.hooks_command == 'uninstall':
+                # Determine which hooks to uninstall
+                hook_types = []
+                if args.pre_commit:
+                    hook_types.append('pre-commit')
+                if args.post_commit:
+                    hook_types.append('post-commit')
+                if args.pre_push:
+                    hook_types.append('pre-push')
+                
+                # If no specific hooks requested, uninstall all
+                if not hook_types:
+                    hook_types = None
+                
+                print("🔧 Uninstalling AccuDoc git hooks...")
+                results = manager.uninstall_hooks(hook_types)
+                
+                for hook_type, result in results.items():
+                    if 'error' not in result:
+                        if result.get('restored_backup'):
+                            print(f"✅ {hook_type}: Removed and restored backup")
+                        else:
+                            print(f"✅ {hook_type}: Removed")
+                    else:
+                        print(f"❌ {hook_type}: {result['error']}")
+                
+                print("\n✓ Uninstall complete")
+                return 0
+            
+            elif args.hooks_command == 'list':
+                hooks = manager.list_installed_hooks()
+                
+                print("Git Hooks Status:")
+                print("=" * 60)
+                for hook_type, info in hooks.items():
+                    if info['installed']:
+                        status = "✅ Installed (AccuDoc)" if info['is_accudoc'] else "⚠️  Installed (non-AccuDoc)"
+                        print(f"  {hook_type}: {status}")
+                        print(f"    Path: {info['path']}")
+                    else:
+                        print(f"  {hook_type}: ❌ Not installed")
+                
+                return 0
+            
+            else:
+                print(f"Unknown hooks command: {args.hooks_command}")
+                return 1
+        
+        except Exception as e:
+            print(f"✗ Error managing git hooks: {e}", file=sys.stderr)
+            return 1
+    
+    def analytics_command(self, args):
+        """Execute analytics command."""
+        from accudoc.analytics import AnalyticsEngine, PageView, SearchQuery, calculate_roi_metrics
+        from datetime import datetime
+        
+        try:
+            if not args.analytics_command:
+                print("Error: No analytics sub-command specified.")
+                return 1
+            
+            engine = AnalyticsEngine(args.db)
+            
+            if args.analytics_command == 'track-view':
+                view = PageView(
+                    page_path=args.page,
+                    timestamp=datetime.now(),
+                    user_id=args.user,
+                    session_id=args.session,
+                    duration_seconds=args.duration
+                )
+                view_id = engine.track_page_view(view)
+                print(f"✓ Tracked page view: {args.page} (ID: {view_id})")
+                return 0
+            
+            elif args.analytics_command == 'track-search':
+                search = SearchQuery(
+                    query=args.query,
+                    timestamp=datetime.now(),
+                    results_count=args.results,
+                    user_id=args.user,
+                    clicked_result=args.clicked
+                )
+                search_id = engine.track_search(search)
+                print(f"✓ Tracked search: '{args.query}' (ID: {search_id})")
+                return 0
+            
+            elif args.analytics_command == 'report':
+                summary = engine.get_summary(args.days)
+                
+                if args.format == 'json':
+                    import json
+                    output = {
+                        'total_views': summary.total_views,
+                        'unique_pages': summary.unique_pages,
+                        'avg_session_duration': summary.avg_session_duration,
+                        'most_viewed_pages': summary.most_viewed_pages,
+                        'search_queries': summary.search_queries_count,
+                        'top_searches': summary.top_searches,
+                        'total_edits': summary.total_edits,
+                        'active_contributors': summary.active_contributors,
+                        'doc_age_days': summary.doc_age_days,
+                        'stale_docs': summary.stale_docs
+                    }
+                    result = json.dumps(output, indent=2)
+                else:
+                    result = f"""
+📊 Documentation Analytics Report
+Period: Last {args.days} days
+{'='*60}
+
+📈 Usage Metrics:
+  Total Views: {summary.total_views}
+  Unique Pages: {summary.unique_pages}
+  Avg Session Duration: {summary.avg_session_duration}s
+
+🔝 Most Viewed Pages:
+{chr(10).join(f'  {i+1}. {page} ({views} views)' for i, (page, views) in enumerate(summary.most_viewed_pages[:5]))}
+
+🔍 Search Activity:
+  Total Searches: {summary.search_queries_count}
+  Top Searches:
+{chr(10).join(f'    - "{query}" ({count}x)' for query, count in summary.top_searches[:5])}
+
+✏️ Content Activity:
+  Total Edits: {summary.total_edits}
+  Active Contributors: {summary.active_contributors}
+
+⏰ Document Health:
+  Average Age: {summary.doc_age_days} days
+  Stale Documents: {len(summary.stale_docs)}
+{chr(10).join(f'    - {doc}' for doc in summary.stale_docs[:5])}
+"""
+                
+                if args.output:
+                    with open(args.output, 'w') as f:
+                        f.write(result)
+                    print(f"✓ Report saved to: {args.output}")
+                else:
+                    print(result)
+                return 0
+            
+            elif args.analytics_command == 'team':
+                productivity = engine.get_team_productivity(args.days)
+                
+                output = f"""
+👥 Team Productivity Report
+Period: Last {args.days} days
+{'='*60}
+
+Active Contributors: {productivity['active_contributors']}
+Avg Review Velocity: {productivity['avg_review_velocity_hours']} hours
+
+Top Contributors:
+{chr(10).join(f"  {i+1}. {c['user_id']}: {c['edits']} edits, {c['net_lines']:+d} net lines" 
+              for i, c in enumerate(productivity['top_contributors'][:10]))}
+
+Daily Activity (last 7 days):
+{chr(10).join(f"  {date}: {edits} edits" for date, edits in productivity['daily_edit_activity'][-7:])}
+"""
+                
+                if args.output:
+                    with open(args.output, 'w') as f:
+                        f.write(output)
+                    print(f"✓ Team report saved to: {args.output}")
+                else:
+                    print(output)
+                return 0
+            
+            elif args.analytics_command == 'aging':
+                aging = engine.get_aging_analysis(args.stale_days)
+                
+                output = f"""
+⏰ Documentation Aging Analysis
+Stale Threshold: {args.stale_days} days
+{'='*60}
+
+Average Document Age: {aging['average_age_days']} days
+Stale Documents: {aging['stale_count']}
+Never Viewed: {aging['never_viewed_count']}
+
+Stale Documents (oldest first):
+{chr(10).join(f"  - {d['path']} ({d['days_old']} days old, {d['views']} views)" 
+              for d in aging['stale_documents'][:10])}
+
+Never Viewed Documents:
+{chr(10).join(f"  - {path}" for path in aging['never_viewed'][:10])}
+"""
+                
+                if args.output:
+                    with open(args.output, 'w') as f:
+                        f.write(output)
+                    print(f"✓ Aging report saved to: {args.output}")
+                else:
+                    print(output)
+                return 0
+            
+            elif args.analytics_command == 'roi':
+                roi = calculate_roi_metrics(engine, args.team_size, args.hourly_rate, args.days)
+                
+                print(f"""
+💰 Documentation ROI Analysis
+Period: Last {args.days} days
+Team Size: {args.team_size}
+Hourly Rate: ${args.hourly_rate}
+{'='*60}
+
+⏱️  Time Saved: {roi['time_saved_hours']} hours
+💵 Value Generated: ${roi['value_saved_dollars']:,.2f}
+💸 Documentation Cost: ${roi['cost_of_documentation']:,.2f}
+
+📊 ROI: {roi['roi_percentage']}%
+
+📈 Usage Metrics:
+  Views per Team Member: {roi['views_per_team_member']}
+  Documentation Usage Rate: {roi['documentation_usage_rate']}%
+""")
+                return 0
+            
+            else:
+                print(f"Unknown analytics command: {args.analytics_command}")
+                return 1
+        
+        except Exception as e:
+            print(f"✗ Error in analytics: {e}", file=sys.stderr)
+            import traceback
+            traceback.print_exc()
             return 1
 
     def quality_analyze_command(self, args):
@@ -3813,6 +4247,170 @@ Repository: {args.repository}
             
         except Exception as e:
             print(f"❌ Error generating quality report: {e}")
+            return 1
+
+    def visual_diagram_command(self, args):
+        """Handle visual diagram generation command."""
+        try:
+            system = VisualDocumentationSystem()
+            
+            config = DiagramConfig(
+                diagram_type=args.type,
+                output_format=args.format,
+                theme=args.theme,
+                direction=args.direction
+            )
+            
+            print(f"🎨 Generating {args.type} diagram...")
+            
+            # Analyze repository or load data
+            if Path(args.repository).is_file() and args.repository.endswith('.json'):
+                with open(args.repository, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+            else:
+                print(f"📊 Analyzing repository: {args.repository}")
+                data = system.analyze_code_for_diagrams(args.repository)
+            
+            # Generate diagram
+            diagram = system.generate_diagram(args.type, data, config)
+            
+            # Output or save
+            if args.output:
+                system.export_diagram(diagram, args.output, args.format)
+                print(f"✓ Diagram saved to: {args.output}")
+            else:
+                print("\n" + "="*60)
+                print(diagram)
+                print("="*60)
+            
+            return 0
+            
+        except Exception as e:
+            print(f"❌ Error generating diagram: {e}")
+            return 1
+
+    def visual_api_explorer_command(self, args):
+        """Handle API explorer generation command."""
+        try:
+            system = VisualDocumentationSystem()
+            
+            print(f"🚀 Generating interactive API explorer...")
+            
+            # Load API specification
+            with open(args.api_spec, 'r', encoding='utf-8') as f:
+                api_data = json.load(f)
+            
+            # Generate HTML explorer
+            html = system.api_explorer.generate_html_explorer(api_data)
+            
+            # Save to file
+            output_path = args.output or 'api-explorer.html'
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write(html)
+            
+            print(f"✓ Interactive API Explorer saved to: {output_path}")
+            print(f"💡 Open in browser to explore your API interactively")
+            
+            return 0
+            
+        except Exception as e:
+            print(f"❌ Error generating API explorer: {e}")
+            return 1
+
+    def visual_analyze_command(self, args):
+        """Handle code analysis for diagram generation command."""
+        try:
+            system = VisualDocumentationSystem()
+            
+            print(f"🔍 Analyzing repository for diagram data...")
+            
+            # Analyze code structure
+            results = system.analyze_code_for_diagrams(args.repository)
+            
+            # Generate output
+            if args.format == 'json':
+                if args.output:
+                    with open(args.output, 'w', encoding='utf-8') as f:
+                        json.dump(results, f, indent=2)
+                    print(f"✓ Analysis saved to: {args.output}")
+                else:
+                    print(json.dumps(results, indent=2))
+            else:
+                # Summary format
+                output = f"""
+📊 Code Analysis Summary
+========================
+
+📁 Files Analyzed: {len(results['files'])}
+
+📦 Classes Found: {sum(len(f['classes']) for f in results['files'])}
+🔧 Functions Found: {sum(len(f['functions']) for f in results['files'])}
+
+Top Files by Classes:
+"""
+                top_files = sorted(results['files'], 
+                                 key=lambda x: len(x['classes']), 
+                                 reverse=True)[:5]
+                
+                for file_info in top_files:
+                    if file_info['classes']:
+                        output += f"\n• {file_info['path']}: {len(file_info['classes'])} classes"
+                
+                output += "\n\n💡 Use this data to generate architecture diagrams!"
+                
+                if args.output:
+                    with open(args.output, 'w', encoding='utf-8') as f:
+                        f.write(output)
+                    print(f"✓ Analysis summary saved to: {args.output}")
+                else:
+                    print(output)
+            
+            return 0
+            
+        except Exception as e:
+            print(f"❌ Error analyzing code: {e}")
+            return 1
+
+    def visual_flowchart_command(self, args):
+        """Handle flowchart generation from function command."""
+        try:
+            import ast
+            
+            system = VisualDocumentationSystem()
+            
+            print(f"📊 Generating flowchart for function: {args.function}")
+            
+            # Parse Python file
+            with open(args.file, 'r', encoding='utf-8') as f:
+                tree = ast.parse(f.read())
+            
+            # Find the specified function
+            function_node = None
+            for node in ast.walk(tree):
+                if isinstance(node, ast.FunctionDef) and node.name == args.function:
+                    function_node = node
+                    break
+            
+            if not function_node:
+                print(f"❌ Function '{args.function}' not found in {args.file}")
+                return 1
+            
+            # Generate flowchart
+            flowchart = system.mermaid_gen.generate_flowchart(function_node)
+            
+            # Output or save
+            if args.output:
+                system.export_diagram(flowchart, args.output, args.format)
+                print(f"✓ Flowchart saved to: {args.output}")
+            else:
+                print("\n" + "="*60)
+                print(flowchart)
+                print("="*60)
+            
+            return 0
+            
+        except Exception as e:
+            print(f"❌ Error generating flowchart: {e}")
             return 1
 
 

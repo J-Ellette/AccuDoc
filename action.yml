@@ -1,0 +1,198 @@
+name: 'AccuDoc - Auto Documentation Generator'
+description: 'Automatically scan and generate comprehensive documentation for your repository'
+author: 'J-Ellette'
+branding:
+  icon: 'book-open'
+  color: 'blue'
+
+inputs:
+  repository-path:
+    description: 'Path to the repository to scan (default: current directory)'
+    required: false
+    default: '.'
+  
+  output-file:
+    description: 'Output documentation file path'
+    required: false
+    default: 'docs/DOCUMENTATION.md'
+  
+  template:
+    description: 'Documentation template (default, minimal, detailed, api, readme, student)'
+    required: false
+    default: 'default'
+  
+  format:
+    description: 'Output format (markdown, html, txt, pdf, site)'
+    required: false
+    default: 'markdown'
+  
+  theme:
+    description: 'HTML theme (default, dark, minimal, corporate)'
+    required: false
+    default: 'default'
+  
+  markdown-flavor:
+    description: 'Markdown flavor (github, gitlab, commonmark)'
+    required: false
+    default: 'github'
+  
+  no-cache:
+    description: 'Disable caching for fresh scan'
+    required: false
+    default: 'false'
+  
+  health-check:
+    description: 'Run project health check and output score'
+    required: false
+    default: 'false'
+  
+  quality-check:
+    description: 'Run quality analysis with benchmarking'
+    required: false
+    default: 'false'
+  
+  coverage-threshold:
+    description: 'Minimum documentation coverage percentage (0-100, fails if below)'
+    required: false
+    default: '0'
+  
+  fail-on-warnings:
+    description: 'Fail if documentation warnings are found'
+    required: false
+    default: 'false'
+  
+  pr-comment:
+    description: 'Post results as PR comment (requires GITHUB_TOKEN)'
+    required: false
+    default: 'false'
+
+outputs:
+  documentation-file:
+    description: 'Path to generated documentation'
+    value: ${{ steps.generate.outputs.doc-file }}
+  
+  health-score:
+    description: 'Project health score (0-100)'
+    value: ${{ steps.health.outputs.score }}
+  
+  coverage-score:
+    description: 'Documentation coverage percentage'
+    value: ${{ steps.health.outputs.coverage }}
+  
+  quality-score:
+    description: 'Documentation quality score (0-100)'
+    value: ${{ steps.quality.outputs.score }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Clone AccuDoc
+      shell: bash
+      run: |
+        if [ ! -d "/tmp/accudoc" ]; then
+          git clone --depth 1 https://github.com/J-Ellette/AccuDoc.git /tmp/accudoc
+        fi
+    
+    - name: Generate Documentation
+      id: generate
+      shell: bash
+      run: |
+        ARGS=("${{ inputs.repository-path }}" -o "${{ inputs.output-file }}")
+        ARGS+=(--template "${{ inputs.template }}")
+        ARGS+=(--format "${{ inputs.format }}")
+        
+        if [ "${{ inputs.format }}" = "html" ]; then
+          ARGS+=(--theme "${{ inputs.theme }}")
+        fi
+        
+        if [ "${{ inputs.format }}" = "markdown" ]; then
+          ARGS+=(--markdown-flavor "${{ inputs.markdown-flavor }}")
+        fi
+        
+        if [ "${{ inputs.no-cache }}" = "true" ]; then
+          ARGS+=(--no-cache)
+        fi
+        
+        echo "Running: python /tmp/accudoc/accudoc_cli.py export ${ARGS[@]}"
+        python /tmp/accudoc/accudoc_cli.py export "${ARGS[@]}"
+        
+        echo "doc-file=${{ inputs.output-file }}" >> $GITHUB_OUTPUT
+        echo "✅ Documentation generated: ${{ inputs.output-file }}"
+    
+    - name: Run Health Check
+      id: health
+      if: inputs.health-check == 'true'
+      shell: bash
+      run: |
+        echo "Running project health check..."
+        OUTPUT=$(python /tmp/accudoc/accudoc_cli.py health "${{ inputs.repository-path }}" --json)
+        
+        SCORE=$(echo "$OUTPUT" | jq -r '.health_score // 0')
+        COVERAGE=$(echo "$OUTPUT" | jq -r '.metrics.documentation_coverage.percentage // 0')
+        
+        echo "score=$SCORE" >> $GITHUB_OUTPUT
+        echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+        
+        echo "📊 Health Score: $SCORE/100"
+        echo "📝 Coverage: $COVERAGE%"
+        
+        # Check coverage threshold
+        THRESHOLD=${{ inputs.coverage-threshold }}
+        if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
+          echo "❌ Documentation coverage ($COVERAGE%) is below threshold ($THRESHOLD%)"
+          exit 1
+        fi
+    
+    - name: Run Quality Analysis
+      id: quality
+      if: inputs.quality-check == 'true'
+      shell: bash
+      run: |
+        echo "Running quality analysis..."
+        OUTPUT=$(python /tmp/accudoc/accudoc_cli.py quality-analyze "${{ inputs.repository-path }}" --json)
+        
+        QUALITY=$(echo "$OUTPUT" | jq -r '.overall_score // 0')
+        echo "score=$QUALITY" >> $GITHUB_OUTPUT
+        echo "⭐ Quality Score: $QUALITY/100"
+        
+        # Check for warnings
+        WARNINGS=$(echo "$OUTPUT" | jq -r '.warnings // [] | length')
+        if [ "${{ inputs.fail-on-warnings }}" = "true" ] && [ "$WARNINGS" -gt 0 ]; then
+          echo "⚠️ Found $WARNINGS documentation warnings"
+          echo "$OUTPUT" | jq -r '.warnings[]'
+          exit 1
+        fi
+    
+    - name: Post PR Comment
+      if: inputs.pr-comment == 'true' && github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ github.token }}
+        script: |
+          const fs = require('fs');
+          const healthScore = '${{ steps.health.outputs.score }}' || 'N/A';
+          const coverage = '${{ steps.health.outputs.coverage }}' || 'N/A';
+          const quality = '${{ steps.quality.outputs.score }}' || 'N/A';
+          
+          const comment = `## 📚 AccuDoc Report
+          
+          **Documentation Generated**: \`${{ inputs.output-file }}\`
+          
+          ${healthScore !== 'N/A' ? `**Health Score**: ${healthScore}/100 🏥` : ''}
+          ${coverage !== 'N/A' ? `**Coverage**: ${coverage}% 📊` : ''}
+          ${quality !== 'N/A' ? `**Quality Score**: ${quality}/100 ⭐` : ''}
+          
+          ---
+          *Generated by [AccuDoc](https://github.com/J-Ellette/AccuDoc)*`;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });

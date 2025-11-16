@@ -20,12 +20,17 @@ AccuDoc is a Python application that scans repositories (local or remote) and au
     - **Enterprise**: Multi-repository dashboard, custom reports, hooks system, archive management, onboarding workflows, compliance checking
     - **Health Dashboard**: Project health scoring with interactive improvement tips
     - **URL Validation**: Support for both local paths and remote repository URLs
+    - **Code Preview**: View any file with syntax highlighting; drag & drop support; quick copy
   - See `electron-gui/` directory for the Electron application
+  - **🆕 Smart Search & Discovery**: Fuzzy/exact search across source and docs, with GUI results linking to Code Preview
+    - **Jump-To-Line Preview**: Open a search match directly in Code Preview with line highlight & smooth scroll
+
 - **Tkinter GUI**: Easy-to-use graphical interface built with Tkinter
   - **🆕 Drag & Drop Support**: Simply drag and drop repository folders into the application
   - **🆕 Live Preview**: Side-by-side markdown and HTML preview for generated documentation
   - **🆕 Multi-Window Support**: Open multiple repositories in separate windows for parallel work
   - **🆕 Internationalization**: Multi-language UI support (English, Spanish, French, German, Chinese, Japanese, Arabic) with auto-detection
+
 - **🆕 Documentation Translation**: Generate documentation in 7 languages
   - English (en) - default
   - Spanish (es) - Español
@@ -157,7 +162,7 @@ AccuDoc is a Python application that scans repositories (local or remote) and au
   - **Change Notifications**: Visual indicators for edits by other users
   - **Slack/Teams Integration**: Notifications for comments and review requests
   - **Session Management**: Persistent collaboration sessions with history
-  - **CLI Commands**: 
+  - **CLI Commands**:
     - `start-collab-server` - Start WebSocket collaboration server
     - `collab-status` - Check server status and statistics
     - `manage-sessions` - List active sessions and edit history
@@ -173,13 +178,47 @@ AccuDoc is a Python application that scans repositories (local or remote) and au
   - **Improvement Suggestions**: AI-powered recommendations for quality enhancement
   - **Historical Analysis**: Track quality metrics evolution with SQLite storage
   - **Multiple Output Formats**: Text, JSON, HTML, and Markdown reports
-  - **CLI Commands**: 
+  - **CLI Commands**:
     - `quality-analyze` - Run comprehensive quality analysis with benchmarking
     - `quality-history` - View quality score trends and historical data
     - `quality-benchmark` - Compare against industry standards
     - `quality-report` - Generate detailed reports with all metrics
   - **GUI Integration**: Visual quality dashboard with score circles and trend charts
   - **Percentile Ranking**: See how your documentation compares to industry standards
+- **🆕 Visual Documentation Tools**: Generate diagrams and interactive visualizations
+  - **9 Diagram Types**: Architecture, class, sequence, flowchart, ER, state, dependency, component, and deployment diagrams
+  - **Multiple Formats**: Mermaid.js (modern, embeddable) and PlantUML (enterprise-grade)
+  - **Interactive HTML**: Self-contained HTML documents with embedded diagrams and JavaScript
+  - **Theme Support**: Choose from default, dark, forest, or neutral themes
+  - **Flexible Layouts**: Top-to-bottom, left-to-right, right-to-left, and bottom-to-top orientations
+  - **API Explorer**: Generate interactive HTML-based API documentation with live examples
+  - **AST-Based Analysis**: Automatic code structure extraction using Python AST parsing
+  - **Flowchart Generation**: Create detailed flowcharts from Python functions
+  - **CLI Commands**:
+    - `visual-diagram` - Generate architecture, class, sequence, and other diagram types
+    - `visual-api-explorer` - Create interactive API documentation from repository analysis
+    - `visual-analyze` - Analyze code structure and generate diagram data
+    - `visual-flowchart` - Generate flowcharts from specific Python functions
+  - **GUI Integration**: Tabbed interface with diagram preview, export, and save functionality
+  - **Export Options**: HTML, Markdown, and plain text formats with SVG/PNG support (planned)
+- **🆕 REST API**: Programmatic access via HTTP
+  - **RESTful Design**: Clean JSON API for all features
+- **🆕 IDE Extensions**: Native integration for VS Code and JetBrains IDEs
+  - **VS Code Extension**: Complete AccuDoc integration for Visual Studio Code
+    - Repository scanning and documentation generation
+    - Smart search with jump-to-line results
+    - Quality analysis with metrics sidebar
+    - Tree view explorer for quick access
+    - Command palette integration
+    - Status bar indicators
+  - **JetBrains Plugin**: Support for IntelliJ IDEA, PyCharm, WebStorm, and more
+    - Tool window with all AccuDoc features
+    - Context menu integration in project explorer
+    - Editor popup actions
+    - Settings configuration panel
+    - Compatible with all JetBrains IDEs (2021.1+)
+  - **Easy Installation**: Available via VS Code Marketplace and JetBrains Marketplace
+  - See `ide-extensions/` directory for source code and installation instructions
 - **🆕 REST API**: Programmatic access via HTTP
   - **RESTful Design**: Clean JSON API for all features
   - **11 Endpoints**: Scan, generate, health, trends, compare, custom reports, data export
@@ -301,6 +340,7 @@ AccuDoc is a Python application that scans repositories (local or remote) and au
 AccuDoc now includes powerful new features for developers and teams:
 
 ### 🤝 Collaborative Documentation Workspace
+
 - **Multi-User Editing**: Multiple users can edit documentation simultaneously
 - **CRDT-Based Conflict Resolution**: Automatic conflict-free merging of concurrent edits
 - **Real-Time Collaboration**: See changes from other users in real-time
@@ -313,6 +353,7 @@ AccuDoc now includes powerful new features for developers and teams:
 - See [COLLABORATIVE_WORKSPACE.md](COLLABORATIVE_WORKSPACE.md) for detailed documentation
 
 ### 📦 Python Library Support
+
 - **Install via pip**: `pip install .`
 - **Use as a library**: Import and use AccuDoc programmatically in your Python code
 - **Console scripts**: `accudoc` command available after installation
@@ -320,6 +361,7 @@ AccuDoc now includes powerful new features for developers and teams:
 - See `examples/library_usage.py` for comprehensive examples
 
 ### 📚 Documentation Versioning
+
 - **Version History**: Track all changes to generated documentation
 - **Diff Viewer**: Compare versions to see what changed
 - **Tagging**: Tag important versions (v1.0, release, etc.)
@@ -327,48 +369,56 @@ AccuDoc now includes powerful new features for developers and teams:
 - **Export**: Save history as JSON, CSV, or Markdown
 
 ### ⏰ Scheduled Scans
+
 - **Automatic Updates**: Scan repositories on a schedule (hourly, daily, weekly, monthly)
 - **Background Processing**: Runs in background thread
 - **Custom Callbacks**: Register custom handlers for scan completion
 - **Persistent Config**: Schedules survive restarts
 
 ### 📧 Email Reports
+
 - **Send Documentation**: Email generated docs to stakeholders
 - **Multiple Providers**: Gmail, Outlook, Yahoo, Office365 presets
 - **Rich Formatting**: HTML emails with attachments
 - **Summary Reports**: Include scan statistics and metrics
 
 ### 🎨 Template Gallery
+
 - **Browse Templates**: View all available documentation templates
 - **Search & Filter**: Find templates by category, tags, or keywords
 - **Preview**: See what each template includes
 - **Built-in Templates**: 6 professional templates ready to use
 
 ### 🎓 Interactive Tutorials
+
 - **Learn AccuDoc**: Step-by-step tutorials for new users
 - **Track Progress**: Save completion status across sessions
 - **3 Tutorials**: Getting Started (10min), Advanced Features (20min), CLI Mastery (15min)
 - **Context-Aware**: Examples and tips relevant to your workflow
 
 ### ⌨️ Keyboard Shortcuts
+
 - **Quick Actions**: Common operations with keyboard shortcuts
 - **Customizable**: Change shortcuts to your preference
 - **Comprehensive**: 15+ default shortcuts for all actions
 - **GUI Integration**: Seamlessly integrated with Tkinter interface
 
 ### 🔍 Documentation Search
+
 - **Search Docs**: Find information in AccuDoc's documentation
 - **Context Results**: See surrounding context for each match
 - **Topic Help**: Get help on specific topics
 - **Relevance Scoring**: Most relevant results first
 
 ### ⚡ Async Operations
+
 - **Non-Blocking**: Async scanning prevents UI freezing
 - **Event System**: Subscribe to scan events
 - **Batch Processing**: Scan multiple repos concurrently
 - **Timeout Support**: Handle long-running scans gracefully
 
 ### 🏗️ Technical Improvements
+
 - **Type Hints**: Full type coverage for better IDE support
 - **Dataclasses**: Modern data modeling with dataclasses
 - **Modular Design**: Independent, reusable modules
@@ -629,6 +679,76 @@ Quality Metrics:
 - **Documentation Debt**: Accumulated quality issues requiring attention
 - **Industry Percentile**: How you rank against similar projects
 - **Improvement Suggestions**: AI-powered recommendations for quality enhancement
+
+#### Visual Documentation Tools
+
+Generate diagrams and interactive visualizations from your codebase:
+
+```bash
+# Generate architecture diagram
+python accudoc_cli.py visual-diagram /path/to/repo --type architecture --theme default --format html -o architecture.html
+
+# Generate class diagram with custom theme
+python accudoc_cli.py visual-diagram /path/to/repo --type class --theme dark --direction LR --format markdown -o classes.md
+
+# Generate sequence diagram
+python accudoc_cli.py visual-diagram /path/to/repo --type sequence --theme forest --format mermaid -o sequence.mmd
+
+# Generate dependency graph
+python accudoc_cli.py visual-diagram /path/to/repo --type dependency --direction TB --format html -o dependencies.html
+
+# Generate ER diagram for database models
+python accudoc_cli.py visual-diagram /path/to/repo --type er --theme neutral --format html -o database.html
+
+# Generate state diagram
+python accudoc_cli.py visual-diagram /path/to/repo --type state --format markdown -o states.md
+
+# Generate component diagram (PlantUML)
+python accudoc_cli.py visual-diagram /path/to/repo --type component --format html -o components.html
+
+# Generate deployment diagram (PlantUML)
+python accudoc_cli.py visual-diagram /path/to/repo --type deployment --format html -o deployment.html
+
+# Generate interactive API explorer
+python accudoc_cli.py visual-api-explorer /path/to/repo --title "My API Documentation" -o api-docs.html
+
+# Generate API explorer with custom spec
+python accudoc_cli.py visual-api-explorer /path/to/repo --api-spec api-spec.json --title "REST API" -o api.html
+
+# Analyze code structure for diagrams
+python accudoc_cli.py visual-analyze /path/to/repo -o analysis.json
+
+# Generate flowchart for specific function
+python accudoc_cli.py visual-flowchart /path/to/repo --function process_data --max-depth 3 --format html -o flowchart.html
+```
+
+Diagram Types:
+- **architecture**: High-level system architecture with modules and dependencies
+- **class**: UML class diagrams showing classes, methods, and relationships
+- **sequence**: Interaction sequences between components
+- **flowchart**: Process flow diagrams
+- **er**: Entity-relationship diagrams for database models
+- **state**: State machine diagrams for stateful components
+- **dependency**: Module and package dependency graphs
+- **component**: Component structure diagrams (PlantUML)
+- **deployment**: Deployment architecture diagrams (PlantUML)
+
+Themes:
+- **default**: Clean, professional light theme
+- **dark**: Modern dark theme
+- **forest**: Green color scheme
+- **neutral**: Grayscale theme
+
+Diagram Directions:
+- **TB**: Top to Bottom (default)
+- **LR**: Left to Right
+- **RL**: Right to Left
+- **BT**: Bottom to Top
+
+Output Formats:
+- **html**: Interactive HTML with embedded diagrams and JavaScript
+- **markdown**: Markdown with diagram code blocks
+- **mermaid**: Raw Mermaid diagram code
 
 #### Trend Analysis
 
@@ -1140,8 +1260,8 @@ AccuDoc/
 │   ├── templates.py          # Template system
 │   └── markdown_flavors.py   # Markdown flavor support
 ├── main.py                   # Application entry point
-├── test_accudoc.py          # Test suite
-├── test_new_features.py     # Tests for new features
+├── tests/                   # Test suite
+│   ├── test_*.py           # Core module tests
 ├── demo_new_features.py     # Demo of new features
 ├── requirements.txt          # Dependencies (none needed!)
 ├── README.md                # This file
@@ -1149,6 +1269,25 @@ AccuDoc/
 ```
 
 ## Advanced Usage
+### Smart Search Examples
+
+Quick ways to use the new `search` command:
+
+```bash
+# Fuzzy search (default) for architectural references
+python accudoc_cli.py search . --query "architecture diagram" --limit 8
+
+# Exact search limiting to Python and Markdown only
+python accudoc_cli.py search . --query "MIT License" --mode exact --types .py,.md
+
+# JSON output for scripting (list file paths with TODO)
+python accudoc_cli.py search . --query TODO --json | jq '.[].path'
+
+# Increase context lines to see more surrounding text
+python accudoc_cli.py search . --query refactor --context-lines 5 --limit 5
+```
+
+GUI tip: Click a search result's Open button to jump to the matched line in Code Preview with inline highlight.
 
 ### Using Templates
 

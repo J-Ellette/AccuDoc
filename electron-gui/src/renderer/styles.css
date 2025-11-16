@@ -315,6 +315,37 @@ body {
     color: #ce9178;
 }
 
+/* Code Preview */
+.code-preview {
+    padding: 0;
+}
+.code-preview pre {
+    margin: 0;
+    max-height: 600px;
+    overflow: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+.code-preview code {
+    display: block;
+    padding: 12px 16px;
+.search-result .result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+.search-result .file { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+.search-result .score { color: #6a737d; margin-left: 8px; font-size: 12px; }
+.search-result .result-snippet { background: #fff; padding: 8px; border-radius: 4px; overflow-x: auto; }
+    font-size: 13px;
+}
+
+/* Line numbering & jump highlight */
+.code-line { display: flex; gap: 8px; }
+.code-line .ln { width: 3ch; text-align: right; color: #888; -webkit-user-select: none; user-select: none; padding-right: 4px; }
+.code-line.highlight-line { background: #fff3c4; box-shadow: inset 0 0 0 1px #e0c060; }
+
 /* Recent Repos */
 .recent-repos {
     background: white;
@@ -2117,4 +2148,383 @@ textarea {
     color: white;
     font-weight: bold;
     font-size: 12px;
+}
+
+/* Visual Documentation Styles */
+.tab-container {
+    margin-top: 20px;
+}
+
+.tabs {
+    display: flex;
+    gap: 10px;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+.tab {
+    background: none;
+    border: none;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.3s;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+}
+
+.tab:hover {
+    color: var(--primary-color);
+}
+
+.tab.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.tab-content {
+    display: none;
+    animation: fadeIn 0.3s;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.visual-output {
+    max-height: 600px;
+    overflow: auto;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.visual-output iframe {
+    width: 100%;
+    height: 500px;
+    border: none;
+}
+
+.output-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.output-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.sbs-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted);
+    margin-right: 8px;
+}
+
+.output-actions button {
+    display: none;
+}
+
+.output-actions button.visible {
+    display: inline-block;
+}
+
+/* Diagram preview styles */
+.diagram-preview {
+    background: white;
+    padding: 20px;
+    border-radius: 4px;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.mermaid-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+}
+
+/* API Explorer styles */
+.api-explorer-container {
+    background: white;
+    border-radius: 4px;
+}
+
+.api-endpoint {
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    margin-bottom: 15px;
+    overflow: hidden;
+}
+
+.api-endpoint-header {
+    background: var(--light-bg);
+    padding: 12px 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.api-method {
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.api-method.get {
+    background: #61affe;
+    color: white;
+}
+
+.api-method.post {
+    background: #49cc90;
+    color: white;
+}
+
+.api-method.put {
+    background: #fca130;
+    color: white;
+}
+
+.api-method.delete {
+    background: #f93e3e;
+    color: white;
+}
+
+.api-endpoint-body {
+    padding: 15px;
+    display: none;
+}
+
+.api-endpoint.expanded .api-endpoint-body {
+    display: block;
+}
+
+/* Drag and Drop Styles */
+body.drag-active {
+    position: relative;
+}
+
+body.drag-active::after {
+    content: '📁 Drop repository or file here';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 102, 204, 0.1);
+    border: 3px dashed var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--primary-color);
+    z-index: 9999;
+    pointer-events: none;
+}
+
+.drag-over {
+    background-color: rgba(0, 102, 204, 0.1) !important;
+    border: 2px dashed var(--primary-color) !important;
+    transition: all 0.3s ease;
+}
+
+.drop-feedback {
+    position: fixed;
+    padding: 12px 20px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    transition: opacity 0.3s ease;
+    z-index: 10000;
+}
+
+.drop-feedback.success {
+    background: var(--success-color);
+    color: white;
+}
+
+.drop-feedback.error {
+    background: var(--danger-color);
+    color: white;
+}
+
+.drop-feedback.info {
+    background: var(--info-color);
+    color: white;
+}
+
+/* Export Enhancement Styles */
+.export-preview {
+    max-height: 600px;
+    overflow: auto;
+    background: white;
+    padding: 20px;
+}
+
+.diff-sbs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.diff-sbs .pane {
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 10px;
+    background: #fff;
+    overflow: auto;
+    max-height: 600px;
+}
+
+.diff-view {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 12px;
+}
+
+.diff-line {
+    white-space: pre-wrap;
+    padding: 2px 6px;
+}
+
+.diff-line.add {
+    background: #e6ffed;
+    color: #22863a;
+}
+
+.diff-line.del {
+    background: #ffeef0;
+    color: #b31d28;
+}
+
+.diff-line.ctx {
+    color: #6a737d;
+}
+
+.markdown-preview {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    color: var(--text-color);
+}
+
+.markdown-preview h1,
+.markdown-preview h2,
+.markdown-preview h3 {
+    margin-top: 24px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.markdown-preview code {
+    padding: 0.2em 0.4em;
+    margin: 0;
+    font-size: 85%;
+    background-color: rgba(175, 184, 193, 0.2);
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+}
+
+.markdown-preview pre {
+    padding: 16px;
+    overflow: auto;
+    font-size: 85%;
+    line-height: 1.45;
+    background-color: #f6f8fa;
+    border-radius: 6px;
+}
+
+.markdown-preview pre code {
+    display: block;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    line-height: inherit;
+    background-color: transparent;
+    border: 0;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.template-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.template-card {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    background: white;
+    transition: all 0.3s ease;
+}
+
+.template-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.template-editor {
+    margin-top: 16px;
+}
+
+.template-editor textarea {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.template-card h4 {
+    margin: 0 0 10px 0;
+    color: var(--primary-color);
+    font-size: 16px;
+}
+
+.template-card p {
+    margin: 0 0 15px 0;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+/* Notification animations */
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
 }

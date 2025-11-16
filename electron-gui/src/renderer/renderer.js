@@ -20,10 +20,14 @@ const state = {
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
     initializeNavigation();
+    initializeDragDropSupport();
     initializeHomeView();
     initializeScanView();
     initializeGenerateView();
     initializeAnalysisView();
+    initializeVisualView();
+    initializeSearchView();
+    initializePreviewView();
     initializeHealthView();
     initializeExportView();
     initializeOpenSourceView();
@@ -61,6 +65,317 @@ function switchView(viewName) {
     document.getElementById(`${viewName}-view`).classList.add('active');
 
     state.currentView = viewName;
+}
+
+// Drag and Drop Support
+function initializeDragDropSupport() {
+    // Define drag-drop zones with their input IDs
+    const dropZones = [
+        { selector: '#scan-repo-path', type: 'directory' },
+        { selector: '#generate-repo-path', type: 'directory' },
+        { selector: '#analysis-repo-path', type: 'directory' },
+        { selector: '#visual-repo-path', type: 'directory' },
+        { selector: '#health-repo-path', type: 'directory' },
+        { selector: '#export-repo-path', type: 'directory' },
+        { selector: '#os-repo-path', type: 'directory' },
+        { selector: '#batch-config', type: 'file' },
+        { selector: '#export-output-dir', type: 'directory' },
+        { selector: '#batch-export-output', type: 'directory' },
+        { selector: '#preview-file-path', type: 'file' },
+        { selector: '#search-repo-path', type: 'directory' }
+    ];
+
+    // Setup drag-drop for each zone
+    dropZones.forEach(zone => {
+        const input = document.querySelector(zone.selector);
+        if (!input) return;
+
+        const parent = input.closest('.input-group') || input.parentElement;
+
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            parent.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Highlight drop zone when item is dragged over
+        ['dragenter', 'dragover'].forEach(eventName => {
+            parent.addEventListener(eventName, () => {
+                parent.classList.add('drag-over');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            parent.addEventListener(eventName, () => {
+                parent.classList.remove('drag-over');
+            }, false);
+        });
+
+        // Handle dropped files
+        parent.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+
+            if (files.length > 0) {
+                const file = files[0];
+                const filePath = file.path;
+
+                // Validate file type
+                if (zone.type === 'file') {
+                    // For file inputs, accept the file path
+                    input.value = filePath;
+                    
+                    // Show success feedback
+                    showDropFeedback(parent, '✓ File loaded', 'success');
+                } else if (zone.type === 'directory') {
+                    // For directory inputs, check if it's a directory or extract directory
+                    ipcRenderer.invoke('validate-path', filePath).then(result => {
+                        if (result.isDirectory) {
+                            input.value = filePath;
+                            showDropFeedback(parent, '✓ Repository loaded', 'success');
+                        } else if (result.isFile) {
+                            // If it's a file, use its parent directory
+                            const dirPath = filePath.substring(0, filePath.lastIndexOf('\\') || filePath.lastIndexOf('/'));
+                            input.value = dirPath;
+                            showDropFeedback(parent, '✓ Directory loaded', 'success');
+                        } else {
+                            showDropFeedback(parent, '✗ Invalid path', 'error');
+                        }
+                    });
+                }
+            }
+        }
+    });
+
+    // Global drag-drop for entire window
+    const body = document.body;
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        body.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            body.classList.add('drag-active');
+        }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        body.addEventListener(eventName, (e) => {
+            // Only remove if leaving the body entirely
+            if (eventName === 'drop' || e.target === body) {
+                body.classList.remove('drag-active');
+            }
+        }, false);
+    });
+
+    // Show drop feedback
+    function showDropFeedback(element, message, type) {
+        const feedback = document.createElement('div');
+        feedback.className = `drop-feedback ${type}`;
+        feedback.textContent = message;
+        feedback.style.position = 'absolute';
+        feedback.style.zIndex = '1000';
+        
+        const rect = element.getBoundingClientRect();
+        feedback.style.top = `${rect.bottom + 5}px`;
+        feedback.style.left = `${rect.left}px`;
+        
+        document.body.appendChild(feedback);
+        
+        setTimeout(() => {
+            feedback.style.opacity = '0';
+            setTimeout(() => feedback.remove(), 300);
+        }, 2000);
+    }
+}
+
+// Search View
+function initializeSearchView() {
+    const browseRepoBtn = document.getElementById('search-browse-repo');
+    const runBtn = document.getElementById('search-run');
+    const clearBtn = document.getElementById('search-clear');
+    const copyBtn = document.getElementById('search-copy');
+    const exportBtn = document.getElementById('search-export-json');
+    const resultsBox = document.getElementById('search-results');
+
+    browseRepoBtn.addEventListener('click', async () => {
+        const dir = await ipcRenderer.invoke('select-directory');
+        if (dir) {
+            document.getElementById('search-repo-path').value = dir;
+        }
+    });
+
+    async function runSearch(jsonOutput = false) {
+        const repo = document.getElementById('search-repo-path').value.trim();
+        const query = document.getElementById('search-query').value.trim();
+        const types = document.getElementById('search-types').value.trim();
+        const mode = document.getElementById('search-mode').value;
+        const limit = parseInt(document.getElementById('search-limit').value || '50', 10);
+
+        if (!repo || !query) {
+            alert('Please provide both repository path and query');
+            return;
+        }
+
+        const args = [repo, '--query', query, '--mode', mode, '--limit', String(limit), '--context-lines', '2'];
+        if (types) {
+            args.push('--types', types);
+        }
+        if (jsonOutput) {
+            args.push('--json');
+        }
+
+        resultsBox.textContent = 'Searching...';
+        try {
+            const { stdout } = await ipcRenderer.invoke('execute-command', 'search', args);
+            if (jsonOutput) {
+                // Keep JSON as preformatted
+                resultsBox.innerHTML = `<pre>${escapeHtml(stdout)}</pre>`;
+            } else {
+                // Try parse JSON first; if fail, render as text
+                try {
+                    const data = JSON.parse(stdout);
+                    renderSearchResults(data, resultsBox);
+                } catch (_) {
+                    resultsBox.innerHTML = `<pre>${escapeHtml(stdout)}</pre>`;
+                }
+            }
+        } catch (err) {
+            resultsBox.innerHTML = `<div class="error">${escapeHtml(err.message)}</div>`;
+        }
+    }
+
+    runBtn.addEventListener('click', () => runSearch(false));
+    exportBtn.addEventListener('click', () => runSearch(true));
+    clearBtn.addEventListener('click', () => { resultsBox.innerHTML = ''; });
+    copyBtn.addEventListener('click', async () => {
+        await navigator.clipboard.writeText(resultsBox.innerText || '');
+        showNotification('Copied results to clipboard');
+    });
+}
+
+function renderSearchResults(items, container) {
+    if (!Array.isArray(items) || items.length === 0) {
+        container.textContent = 'No results found.';
+        return;
+    }
+    const html = items.map(item => {
+        const path = escapeHtml(item.path || '');
+        const line = item.line_number || item.line || 0; // support JSON key from search engine
+        const score = (item.score != null) ? Number(item.score).toFixed(2) : '';
+        const lineContent = escapeHtml(item.line_content || '');
+        const before = (item.context_before || []).map(escapeHtml).join('\n');
+        const after = (item.context_after || []).map(escapeHtml).join('\n');
+        return `
+            <div class="search-result" data-path="${path}" data-line="${line}">
+                <div class="result-header">
+                    <span class="file">${path}:${line}</span>
+                    <span class="score">${score}</span>
+                    <button class="btn btn-small open-file">Open</button>
+                </div>
+                <pre class="result-snippet">${before ? before + '\n' : ''}<strong>&gt; ${lineContent}</strong>${after ? '\n' + after : ''}</pre>
+            </div>
+        `;
+    }).join('');
+    container.innerHTML = html;
+
+    // Wire per-result open buttons
+    container.querySelectorAll('.open-file').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const resultEl = e.target.closest('.search-result');
+            const filePath = resultEl.getAttribute('data-path');
+            const lineNumber = parseInt(resultEl.getAttribute('data-line') || '0', 10);
+            // Navigate to Code Preview and open file
+            document.querySelector('.nav-item[data-view="preview"]').click();
+            document.getElementById('preview-file-path').value = filePath;
+            // Reuse preview loader
+            const box = document.getElementById('code-preview');
+            await loadPreviewFile(filePath, box, lineNumber);
+            showNotification('Opened in Code Preview');
+        });
+    });
+}
+
+// Code Preview View
+function initializePreviewView() {
+    const browseBtn = document.getElementById('preview-browse-btn');
+    const openBtn = document.getElementById('preview-open-btn');
+    const copyBtn = document.getElementById('preview-copy-btn');
+    const previewBox = document.getElementById('code-preview');
+
+    browseBtn.addEventListener('click', async () => {
+        const filePath = await ipcRenderer.invoke('select-file', { properties: ['openFile'] });
+        if (filePath) {
+            document.getElementById('preview-file-path').value = filePath;
+            await loadPreviewFile(filePath, previewBox);
+        }
+    });
+
+    openBtn.addEventListener('click', async () => {
+        const filePath = document.getElementById('preview-file-path').value.trim();
+        if (!filePath) {
+            alert('Please enter a file path');
+            return;
+        }
+        await loadPreviewFile(filePath, previewBox);
+    });
+
+    copyBtn.addEventListener('click', async () => {
+        const codeEl = previewBox.querySelector('pre');
+        if (codeEl) {
+            await navigator.clipboard.writeText(codeEl.textContent);
+            showNotification('Copied code to clipboard');
+        }
+    });
+}
+
+function loadPreviewFile(filePath, container, highlightLine) {
+    return ipcRenderer.invoke('read-file', filePath)
+        .then(content => {
+            const ext = (filePath.split('.').pop() || '').toLowerCase();
+            const lang = guessLanguageFromExtension(ext);
+            const highlighted = hljs.highlight(content, { language: lang, ignoreIllegals: true }).value;
+            const lines = highlighted.split(/\r?\n/);
+            const htmlLines = lines.map((segment, idx) => {
+                const ln = idx + 1;
+                const isTarget = highlightLine && ln === highlightLine;
+                const safeSeg = segment === '' ? '&nbsp;' : segment; // preserve empty lines
+                return `<div class="code-line${isTarget ? ' highlight-line' : ''}" data-line="${ln}"><span class="ln">${ln}</span>${safeSeg}</div>`;
+            }).join('');
+            container.innerHTML = `<pre><code class="language-${lang}">${htmlLines}</code></pre>`;
+            if (highlightLine) {
+                const targetEl = container.querySelector(`.code-line.highlight-line`);
+                if (targetEl) {
+                    targetEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                }
+            }
+        })
+        .catch(err => {
+            container.innerHTML = `<div class="error">Failed to load file: ${err.message}</div>`;
+        });
+}
+
+function guessLanguageFromExtension(ext) {
+    const map = {
+        'py': 'python',
+        'js': 'javascript', 'mjs': 'javascript', 'cjs': 'javascript',
+        'ts': 'typescript',
+        'json': 'json', 'jsonc': 'json',
+        'md': 'markdown',
+        'html': 'xml', 'xml': 'xml',
+        'css': 'css', 'scss': 'scss', 'less': 'less',
+        'yml': 'yaml', 'yaml': 'yaml',
+        'sh': 'bash', 'ps1': 'powershell', 'bat': 'dos',
+        'java': 'java', 'kt': 'kotlin', 'go': 'go', 'rb': 'ruby', 'php': 'php', 'rs': 'rust',
+        'c': 'c', 'h': 'c', 'cpp': 'cpp', 'hpp': 'cpp', 'cc': 'cpp',
+        'cs': 'csharp'
+    };
+    return map[ext] || 'plaintext';
 }
 
 // Menu handlers
@@ -379,6 +694,226 @@ async function runAnalysis(analysisType, title, outputBox) {
     } catch (error) {
         outputBox.textContent += `\n\nError: ${error.message}`;
         setStatus('error', `${title} failed`);
+    }
+}
+
+// Visual Documentation View
+function initializeVisualView() {
+    const browseBtn = document.getElementById('visual-browse-btn');
+    const outputBox = document.getElementById('visual-output');
+    const saveBtn = document.getElementById('visual-save-btn');
+    const copyBtn = document.getElementById('visual-copy-btn');
+    const exportBtn = document.getElementById('visual-export-btn');
+    
+    let currentVisualization = null;
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabName = tab.dataset.tab;
+            
+            // Update active tab
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            // Update active content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        });
+    });
+
+    browseBtn.addEventListener('click', async () => {
+        const path = await ipcRenderer.invoke('select-directory');
+        if (path) {
+            document.getElementById('visual-repo-path').value = path;
+        }
+    });
+
+    // Generate Diagram
+    document.getElementById('visual-generate-diagram-btn').addEventListener('click', async () => {
+        const repoPath = document.getElementById('visual-repo-path').value.trim();
+        const diagramType = document.getElementById('visual-diagram-type').value;
+        const theme = document.getElementById('visual-theme').value;
+        const direction = document.getElementById('visual-direction').value;
+        const format = document.getElementById('visual-format').value;
+        
+        if (!repoPath) {
+            alert('Please enter a repository path');
+            return;
+        }
+        
+        outputBox.innerHTML = '<div class="loading">Generating diagram...</div>';
+        showActionButtons();
+        
+        try {
+            const exec = await ipcRenderer.invoke('execute-command', 'visual-diagram', [
+                repoPath,
+                '--type', diagramType,
+                '--theme', theme,
+                '--direction', direction,
+                '--format', format
+            ]);
+            
+            const stdout = exec.stdout || '';
+            if (format === 'html') {
+                outputBox.innerHTML = stdout;
+            } else {
+                outputBox.textContent = stdout;
+            }
+            
+            currentVisualization = {
+                type: 'diagram',
+                content: stdout,
+                format: format,
+                diagramType: diagramType
+            };
+            
+        } catch (error) {
+            outputBox.textContent = `Error: ${error.message}`;
+            hideActionButtons();
+        }
+    });
+
+    // Generate API Explorer
+    document.getElementById('visual-generate-api-btn').addEventListener('click', async () => {
+        const repoPath = document.getElementById('visual-repo-path').value.trim();
+        const apiSpec = document.getElementById('visual-api-spec').value.trim();
+        const title = document.getElementById('visual-api-title').value.trim();
+        
+        if (!repoPath && !apiSpec) {
+            alert('Please enter a repository path or API specification');
+            return;
+        }
+        
+        outputBox.innerHTML = '<div class="loading">Generating interactive API explorer...</div>';
+        showActionButtons();
+        
+        try {
+            const args = [repoPath || '.', '--title', title];
+            if (apiSpec) {
+                // Save API spec to temp file
+                const tempPath = await ipcRenderer.invoke('save-temp-file', {
+                    content: apiSpec,
+                    extension: '.json'
+                });
+                args.push('--api-spec', tempPath);
+            }
+            
+            const exec = await ipcRenderer.invoke('execute-command', 'visual-api-explorer', args);
+            
+            outputBox.innerHTML = exec.stdout || '';
+            currentVisualization = {
+                type: 'api-explorer',
+                content: exec.stdout || '',
+                format: 'html'
+            };
+            
+        } catch (error) {
+            outputBox.textContent = `Error: ${error.message}`;
+            hideActionButtons();
+        }
+    });
+
+    // Generate Flowchart
+    document.getElementById('visual-generate-flowchart-btn').addEventListener('click', async () => {
+        const repoPath = document.getElementById('visual-repo-path').value.trim();
+        const functionName = document.getElementById('visual-function-name').value.trim();
+        const maxDepth = document.getElementById('visual-max-depth').value;
+        
+        if (!repoPath) {
+            alert('Please enter a repository path');
+            return;
+        }
+        
+        if (!functionName) {
+            alert('Please enter a function name');
+            return;
+        }
+        
+        outputBox.innerHTML = '<div class="loading">Generating flowchart...</div>';
+        showActionButtons();
+        
+        try {
+            const exec = await ipcRenderer.invoke('execute-command', 'visual-flowchart', [
+                repoPath,
+                '--function', functionName,
+                '--max-depth', maxDepth,
+                '--format', 'html'
+            ]);
+            
+            outputBox.innerHTML = exec.stdout || '';
+            currentVisualization = {
+                type: 'flowchart',
+                content: exec.stdout || '',
+                format: 'html',
+                functionName: functionName
+            };
+            
+        } catch (error) {
+            outputBox.textContent = `Error: ${error.message}`;
+            hideActionButtons();
+        }
+    });
+
+    // Action buttons
+    saveBtn.addEventListener('click', async () => {
+        if (!currentVisualization) return;
+        
+        const extension = currentVisualization.format === 'html' ? '.html' : '.md';
+        const path = await ipcRenderer.invoke('save-file-dialog', {
+            defaultPath: `visualization${extension}`,
+            filters: [
+                { name: 'HTML Files', extensions: ['html'] },
+                { name: 'Markdown Files', extensions: ['md'] },
+                { name: 'Text Files', extensions: ['txt'] }
+            ]
+        });
+        
+        if (path) {
+            await ipcRenderer.invoke('save-file', {
+                path: path,
+                content: currentVisualization.content
+            });
+            alert(`Saved to ${path}`);
+        }
+    });
+
+    copyBtn.addEventListener('click', () => {
+        if (!currentVisualization) return;
+        navigator.clipboard.writeText(currentVisualization.content);
+        alert('Copied to clipboard!');
+    });
+
+    exportBtn.addEventListener('click', async () => {
+        if (!currentVisualization) return;
+        
+        const path = await ipcRenderer.invoke('save-file-dialog', {
+            defaultPath: `visualization_export`,
+            filters: [
+                { name: 'PNG Image', extensions: ['png'] },
+                { name: 'SVG Image', extensions: ['svg'] },
+                { name: 'PDF Document', extensions: ['pdf'] }
+            ]
+        });
+        
+        if (path) {
+            // Would need additional rendering logic for image export
+            alert('Image export feature coming soon!');
+        }
+    });
+
+    function showActionButtons() {
+        saveBtn.classList.add('visible');
+        copyBtn.classList.add('visible');
+        exportBtn.classList.add('visible');
+    }
+
+    function hideActionButtons() {
+        saveBtn.classList.remove('visible');
+        copyBtn.classList.remove('visible');
+        exportBtn.classList.remove('visible');
     }
 }
 
@@ -911,8 +1446,35 @@ function generateLicenseTips(score, metrics, recommendations) {
 function initializeExportView() {
     const browseBtn = document.getElementById('export-browse-btn');
     const outputBrowseBtn = document.getElementById('export-output-browse-btn');
+    const previewBtn = document.getElementById('export-preview-btn');
     const startBtn = document.getElementById('export-start-btn');
-    const outputBox = document.getElementById('export-output');
+    const batchStartBtn = document.getElementById('batch-export-start-btn');
+    const batchBrowseBtn = document.getElementById('batch-export-browse-btn');
+    const previewBox = document.getElementById('export-preview-box');
+    const sbsToggle = document.getElementById('export-sbs-toggle');
+    const compareBtn = document.createElement('button');
+    compareBtn.id = 'export-compare-btn';
+    compareBtn.className = 'btn btn-secondary';
+    compareBtn.textContent = '🧩 Compare with README';
+    const actions = document.querySelector('#export-view .output-actions');
+    if (actions) actions.prepend(compareBtn);
+    const copyPreviewBtn = document.getElementById('export-copy-preview-btn');
+    const openFolderBtn = document.getElementById('export-open-folder-btn');
+    
+    let lastExportPath = null;
+
+    // Tab switching for export view
+    document.querySelectorAll('#export-view .tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabName = tab.dataset.tab;
+            document.querySelectorAll('#export-view .tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            document.querySelectorAll('#export-view .tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        });
+    });
 
     browseBtn.addEventListener('click', async () => {
         const path = await ipcRenderer.invoke('select-directory');
@@ -924,36 +1486,179 @@ function initializeExportView() {
     outputBrowseBtn.addEventListener('click', async () => {
         const path = await ipcRenderer.invoke('select-directory');
         if (path) {
-            document.getElementById('export-output').value = path;
+            document.getElementById('export-output-dir').value = path;
         }
     });
 
+    batchBrowseBtn.addEventListener('click', async () => {
+        const path = await ipcRenderer.invoke('select-directory');
+        if (path) {
+            document.getElementById('batch-export-output').value = path;
+        }
+    });
+
+    // Preview with syntax highlighting
+    previewBtn.addEventListener('click', async () => {
+        const repoPath = document.getElementById('export-repo-path').value.trim();
+        const format = document.getElementById('export-format').value;
+        const template = document.getElementById('export-template').value;
+
+        if (!repoPath) {
+            alert('Please enter a repository path');
+            return;
+        }
+
+        previewBox.innerHTML = '<div class="loading">Generating preview...</div>';
+        setStatus('loading', 'Generating preview...');
+
+        try {
+            const scanResult = await ipcRenderer.invoke('execute-command', 'scan', [repoPath, '--json']);
+            const scanData = JSON.parse(scanResult.stdout);
+
+            if (format === 'markdown' || format === 'html') {
+                const genArgs = [repoPath, '--template', template, '--format', format];
+                const genResult = await ipcRenderer.invoke('execute-command', 'generate', genArgs);
+                
+                if (format === 'html') {
+                    previewBox.innerHTML = genResult.stdout;
+                } else {
+                    const htmlContent = marked.parse(genResult.stdout);
+                    previewBox.innerHTML = `<div class="markdown-preview">${htmlContent}</div>`;
+                    previewBox.querySelectorAll('pre code').forEach((block) => {
+                        hljs.highlightElement(block);
+                    });
+                }
+            } else if (format === 'json') {
+                const formatted = JSON.stringify(scanData, null, 2);
+                previewBox.innerHTML = `<pre><code class="language-json">${hljs.highlight(formatted, {language: 'json'}).value}</code></pre>`;
+            } else {
+                previewBox.textContent = `Preview not available for ${format} format`;
+            }
+
+            copyPreviewBtn.classList.add('visible');
+            setStatus('success', 'Preview generated');
+        } catch (error) {
+            previewBox.textContent = `Error: ${error.message}`;
+            setStatus('error', 'Preview failed');
+        }
+    });
+
+    // Single export
     startBtn.addEventListener('click', async () => {
         const repoPath = document.getElementById('export-repo-path').value.trim();
-        const outputPath = document.getElementById('export-output').value.trim();
+        const outputDir = document.getElementById('export-output-dir').value.trim();
         const format = document.getElementById('export-format').value;
+        const template = document.getElementById('export-template').value;
 
-        if (!repoPath || !outputPath) {
+        if (!repoPath || !outputDir) {
             alert('Please enter both repository and output paths');
             return;
         }
 
-        outputBox.textContent = 'Exporting data...\n';
-        setStatus('loading', 'Exporting data...');
+        previewBox.innerHTML = '<div class="loading">Exporting...</div>';
+        setStatus('loading', 'Exporting...');
         startBtn.disabled = true;
 
         try {
-            const args = [repoPath, '--output', outputPath, '--format', format];
-
-            const result = await ipcRenderer.invoke('execute-command', 'export', args);
+            const args = [repoPath, '--output', outputDir, '--format', format, '--template', template];
+            const result = await ipcRenderer.invoke('execute-command', 'generate', args);
             
-            outputBox.textContent = result.stdout;
+            previewBox.innerHTML = `<pre>${result.stdout}</pre>`;
+            lastExportPath = outputDir;
+            openFolderBtn.classList.add('visible');
             setStatus('success', 'Export completed');
         } catch (error) {
-            outputBox.textContent = `Error: ${error.message}`;
+            previewBox.textContent = `Error: ${error.message}`;
             setStatus('error', 'Export failed');
         } finally {
             startBtn.disabled = false;
+        }
+    });
+
+    // Compare preview with existing README.md
+    compareBtn.addEventListener('click', async () => {
+        const repoPath = document.getElementById('export-repo-path').value.trim();
+        if (!repoPath) {
+            alert('Please enter a repository path');
+            return;
+        }
+        try {
+            const readmePath = repoPath.replace(/\\$/,'') + (repoPath.endsWith('\\') || repoPath.endsWith('/') ? '' : '/') + 'README.md';
+            const existing = await ipcRenderer.invoke('read-file', readmePath).catch(() => '');
+            const current = previewBox.textContent || '';
+            if (sbsToggle && sbsToggle.checked) {
+                const sbsHtml = generateSideBySideDiff(existing, current);
+                previewBox.innerHTML = sbsHtml;
+            } else {
+                const diffHtml = generateSimpleDiff(existing, current);
+                previewBox.innerHTML = `<div class=\"diff-view\">${diffHtml}</div>`;
+            }
+        } catch (error) {
+            showNotification(`Diff failed: ${error.message}`, 'error');
+        }
+    });
+    
+    // Batch export
+    batchStartBtn.addEventListener('click', async () => {
+        const repoList = document.getElementById('batch-export-list').value.trim();
+        const outputDir = document.getElementById('batch-export-output').value.trim();
+        const format = document.getElementById('batch-export-format').value;
+        const workers = document.getElementById('batch-workers').value;
+
+        if (!repoList || !outputDir) {
+            alert('Please enter repositories and output directory');
+            return;
+        }
+
+        previewBox.innerHTML = '<div class="loading">Processing batch export...</div>';
+        setStatus('loading', 'Batch exporting...');
+        batchStartBtn.disabled = true;
+
+        try {
+            let repos = [];
+            if (repoList.startsWith('[')) {
+                repos = JSON.parse(repoList);
+            } else {
+                repos = repoList.split('\n').filter(line => line.trim()).map(path => ({
+                    path: path.trim(),
+                    format: format
+                }));
+            }
+
+            const batchConfig = {
+                repositories: repos.map(r => r.path),
+                output_dir: outputDir,
+                workers: parseInt(workers),
+                format: format
+            };
+
+            const configPath = await ipcRenderer.invoke('save-temp-file', {
+                content: JSON.stringify(batchConfig, null, 2),
+                extension: '.json'
+            });
+
+            const result = await ipcRenderer.invoke('execute-command', 'batch', [configPath]);
+            
+            previewBox.innerHTML = `<pre>${result.stdout}</pre>`;
+            lastExportPath = outputDir;
+            openFolderBtn.classList.add('visible');
+            setStatus('success', 'Batch export completed');
+        } catch (error) {
+            previewBox.textContent = `Error: ${error.message}`;
+            setStatus('error', 'Batch export failed');
+        } finally {
+            batchStartBtn.disabled = false;
+        }
+    });
+
+    copyPreviewBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(previewBox.textContent);
+        showNotification('Copied!');
+    });
+
+    openFolderBtn.addEventListener('click', async () => {
+        if (lastExportPath) {
+            await ipcRenderer.invoke('open-folder', lastExportPath);
         }
     });
 }
@@ -1147,6 +1852,98 @@ function setStatus(type, message) {
     const statusText = document.getElementById('status-text');
     statusText.className = type;
     statusText.textContent = message;
+}
+
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        background: ${type === 'success' ? '#28a745' : '#dc3545'};
+        color: white;
+        border-radius: 4px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Minimal line-by-line diff generator
+function generateSimpleDiff(oldText, newText) {
+    const oldLines = oldText.split(/\r?\n/);
+    const newLines = newText.split(/\r?\n/);
+    const max = Math.max(oldLines.length, newLines.length);
+    let html = '';
+    for (let i = 0; i < max; i++) {
+        const a = oldLines[i] ?? '';
+        const b = newLines[i] ?? '';
+        if (a === b) {
+            html += `<div class="diff-line ctx">  ${escapeHtml(b)}</div>`;
+        } else {
+            if (a) html += `<div class="diff-line del">- ${escapeHtml(a)}</div>`;
+            if (b) html += `<div class="diff-line add">+ ${escapeHtml(b)}</div>`;
+        }
+    }
+    return html;
+}
+
+function escapeHtml(str) {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+// Side-by-side diff using LCS alignment (line-based)
+function generateSideBySideDiff(oldText, newText) {
+    const a = oldText.split(/\r?\n/);
+    const b = newText.split(/\r?\n/);
+    const m = a.length, n = b.length;
+    const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+    for (let i = m - 1; i >= 0; i--) {
+        for (let j = n - 1; j >= 0; j--) {
+            dp[i][j] = a[i] === b[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+        }
+    }
+    const ops = [];
+    let i = 0, j = 0;
+    while (i < m && j < n) {
+        if (a[i] === b[j]) {
+            ops.push({ type: 'ctx', left: a[i], right: b[j] });
+            i++; j++;
+        } else if (dp[i + 1][j] >= dp[i][j + 1]) {
+            ops.push({ type: 'del', left: a[i], right: '' });
+            i++;
+        } else {
+            ops.push({ type: 'add', left: '', right: b[j] });
+            j++;
+        }
+    }
+    while (i < m) { ops.push({ type: 'del', left: a[i++], right: '' }); }
+    while (j < n) { ops.push({ type: 'add', left: '', right: b[j++] }); }
+
+    let html = '<div class="diff-sbs">';
+    let leftHtml = '<div class="pane">';
+    let rightHtml = '<div class="pane">';
+    for (const op of ops) {
+        const cls = op.type === 'ctx' ? 'ctx' : (op.type === 'add' ? 'add' : 'del');
+        leftHtml += `<div class="diff-line ${op.left === '' ? 'add' : (op.type === 'del' ? 'del' : 'ctx')}">` +
+            `${op.left === '' ? '' : escapeHtml(op.left)}</div>`;
+        rightHtml += `<div class="diff-line ${op.right === '' ? 'del' : (op.type === 'add' ? 'add' : 'ctx')}">` +
+            `${op.right === '' ? '' : escapeHtml(op.right)}</div>`;
+    }
+    leftHtml += '</div>'; rightHtml += '</div>';
+    html += leftHtml + rightHtml + '</div>';
+    return html;
 }
 
 function addToRecentRepos(path) {
